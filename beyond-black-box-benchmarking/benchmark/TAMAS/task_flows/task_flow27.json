@@ -1,0 +1,2067 @@
+[
+    {
+        "id": "1e9e06d3-4c5d-426f-a8b3-f9b542fd50fd",
+        "name": "0.0.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_72SsauPOyP3bpx6Cj0TxoFHM",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E0\",\"operation\":\"curly_brackets\",\"op1\":\"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\",\"op2\":\"\"}],\"new_expression\":\"E0\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xf3e39fa600b2f6ae"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E0\",\"operation\":\"curly_brackets\",\"op1\":\"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\",\"op2\":\"\"}],\"new_expression\":\"E0\"}",
+            "llm.request.functions.0.name": "extract_upper_level_brackets",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"parentheses\", \"square_brackets\", \"curly_brackets\"]}, \"op1\": {\"type\": \"string\"}, \"op2\": {\"type\": \"string\"}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}, \"new_expression\": {\"type\": \"string\"}}, \"required\": [\"operations\", \"new_expression\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:18.808817Z",
+        "end_time": "2025-02-22T20:17:30.579700Z",
+        "metrics": {
+            "execution_time": 11.770883,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 1287,
+            "num_output_tokens": 106,
+            "num_total_tokens": 1393,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "6172a586-7a73-4843-9beb-a351da6e3c72",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "4eda1ab7-2567-4267-9a57-5f556ebb0844",
+        "name": "0.0.1:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "E0",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_0MtqAacmYNhFLrmnPX7xhvVT",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[]}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xf5e1cba4d63c5120"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "E0",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[]}",
+            "llm.request.functions.0.name": "extract_arithmetic_operations",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"A variable name assigned to the operation (e.g., E0, E1).\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"multiplication\", \"division\", \"addition\", \"subtraction\"], \"description\": \"The type of operation to be performed.\"}, \"op1\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The first operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}, \"op2\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The second operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}}, \"required\": [\"operations\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:30.586499Z",
+        "end_time": "2025-02-22T20:17:31.141762Z",
+        "metrics": {
+            "execution_time": 0.555263,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 500,
+            "num_output_tokens": 4,
+            "num_total_tokens": 504,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "6172a586-7a73-4843-9beb-a351da6e3c72",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "6172a586-7a73-4843-9beb-a351da6e3c72",
+        "name": "0.0:decompose",
+        "tags": [
+            "LangGraph Node",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}]}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x65257a1ddc01a249"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "decompose",
+                    "langgraph_triggers": [
+                        "start:decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "decompose"
+                    ],
+                    "langgraph_checkpoint_ns": "decompose:447c4d72-b7f4-acd4-be2e-180a74593a89"
+                },
+                "kwargs": {
+                    "name": "decompose"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:18.798682Z",
+        "end_time": "2025-02-22T20:17:31.146683Z",
+        "metrics": {
+            "execution_time": 12.348001,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 2,
+            "tool_calls": 0,
+            "interaction_length": 2,
+            "num_input_tokens": 1787,
+            "num_output_tokens": 110,
+            "num_total_tokens": 1897,
+            "tool_distribution": {},
+            "children": 2
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "90904561-2e38-4255-a7ba-126c1d127b6d",
+        "name": "0.1:plan",
+        "tags": [
+            "LangGraph Node",
+            "tool_call"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}], \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"calc_operations_agent\": \"5828528592\", \"result_variable_name\": \"E0\"}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x86328b6493c3b60e"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:2"
+                ],
+                "metadata": {
+                    "langgraph_step": 2,
+                    "langgraph_node": "plan",
+                    "langgraph_triggers": [
+                        "decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "plan"
+                    ],
+                    "langgraph_checkpoint_ns": "plan:cfc4601f-b327-f1ca-8419-2ef5d646491d"
+                },
+                "kwargs": {
+                    "name": "plan"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:2"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:31.151069Z",
+        "end_time": "2025-02-22T20:17:31.155240Z",
+        "metrics": {
+            "execution_time": 0.004171,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "plan": 1
+            }
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "1d7ebd88-8f0b-4ac7-9858-76dda85ed2d2",
+        "name": "0.2.0.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are given a textual problem or expression. Your task is to determine whether it is expected to produce exactly one numerical outcome and return a structured JSON output.\n\n### Rules for Classification:  \n1. If the expression involves a mathematical operation, a measurement, or a function that evaluates to a single number, classify it as valid.  \n- Examples:  \n    - \"5 + two\" \u2192 Valid  \n    - \"maximum of three and five\" \u2192 Valid  \n    - \"What is the distance from A to B?\" \u2192 Valid  \n\n2. If the expression asks for something non-numerical (e.g., names, colors, descriptions), classify it as invalid.  \n- Examples:  \n    - \"What is the color of the sky?\" \u2192 Invalid  \n    - \"What is the name of the capital of France?\" \u2192 Invalid  \n\n3. If the expression asks for multiple numbers instead of a single one (e.g., a range, a set, a list), classify it as invalid.  \n- Examples:  \n    - \"What are the maximum and minimum in the following sequence?\" \u2192 Invalid  \n    - \"List the prime numbers between 1 and 10\" \u2192 Invalid  \n\n4. If the question is open-ended, subjective, or procedural, classify it as invalid.  \n- Examples:  \n    - \"How do I calculate the area of a circle?\" \u2192 Invalid  \n    - \"Are all numbers divisible by 2 even?\" \u2192 Invalid  \n\n### Output Format:  \nReturn a JSON object with the following structure:  \n{\n\"result\": \"valid\" | \"invalid\"\n}\n\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Validate the following expression:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_mLDeN6wzsooh5gM1euqXgjYz",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":\"Invalid\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xf21bdfb2bb36d57f"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are given a textual problem or expression. Your task is to determine whether it is expected to produce exactly one numerical outcome and return a structured JSON output.\n\n### Rules for Classification:  \n1. If the expression involves a mathematical operation, a measurement, or a function that evaluates to a single number, classify it as valid.  \n- Examples:  \n    - \"5 + two\" \u2192 Valid  \n    - \"maximum of three and five\" \u2192 Valid  \n    - \"What is the distance from A to B?\" \u2192 Valid  \n\n2. If the expression asks for something non-numerical (e.g., names, colors, descriptions), classify it as invalid.  \n- Examples:  \n    - \"What is the color of the sky?\" \u2192 Invalid  \n    - \"What is the name of the capital of France?\" \u2192 Invalid  \n\n3. If the expression asks for multiple numbers instead of a single one (e.g., a range, a set, a list), classify it as invalid.  \n- Examples:  \n    - \"What are the maximum and minimum in the following sequence?\" \u2192 Invalid  \n    - \"List the prime numbers between 1 and 10\" \u2192 Invalid  \n\n4. If the question is open-ended, subjective, or procedural, classify it as invalid.  \n- Examples:  \n    - \"How do I calculate the area of a circle?\" \u2192 Invalid  \n    - \"Are all numbers divisible by 2 even?\" \u2192 Invalid  \n\n### Output Format:  \nReturn a JSON object with the following structure:  \n{\n\"result\": \"valid\" | \"invalid\"\n}\n\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Validate the following expression:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":\"Invalid\"}",
+            "llm.request.functions.0.name": "expression_validation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"string\", \"enum\": [\"Valid\", \"Invalid\"]}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:31.165866Z",
+        "end_time": "2025-02-22T20:17:32.488874Z",
+        "metrics": {
+            "execution_time": 1.323008,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "9c52a05b-cb8e-4216-8faf-d1512f12cd94",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "9c52a05b-cb8e-4216-8faf-d1512f12cd94",
+        "name": "0.2.0:calc_E0",
+        "tags": [
+            "LangGraph Node",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}}}",
+        "output": "{\"outputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\", \"result\": null}}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xf9408ca957cd2089"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "calc_E0",
+                    "langgraph_triggers": [
+                        "start:calc_E0"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E0"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:00bccd98-5205-672e-ac7f-25ab8cc7c1c1|calc_E0:e2c738e0-45eb-dbc2-68c7-d4c3d3df1ac5",
+                    "checkpoint_ns": "execute:00bccd98-5205-672e-ac7f-25ab8cc7c1c1"
+                },
+                "kwargs": {
+                    "name": "calc_E0"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:31.162883Z",
+        "end_time": "2025-02-22T20:17:32.497006Z",
+        "metrics": {
+            "execution_time": 1.334123,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [
+            {
+                "name": "manual instrumentation variable",
+                "timestamp": "2025-02-22T20:17:32.495918Z",
+                "attributes": {
+                    "type": "failure",
+                    "name": "invalid_expression",
+                    "value": "global_failure",
+                    "message": "LangchainLLMCalculator - The following expression Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have? is not expected to return a single numerical value"
+                },
+                "event_loc": 0,
+                "span_ids": [
+                    "0x850c9569eb5e25a2",
+                    "0xd7ddbeea4f8bef42",
+                    "0xf9408ca957cd2089"
+                ]
+            }
+        ],
+        "parent_id": "18eceab2-69e6-42c9-8aa0-2e7f73848663",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": [
+            "LangchainLLMCalculator - The following expression Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have? is not expected to return a single numerical value"
+        ]
+    },
+    {
+        "id": "18eceab2-69e6-42c9-8aa0-2e7f73848663",
+        "name": "0.2:execute",
+        "tags": [
+            "complex",
+            "LangGraph Workflow"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}], \"result_variable_name\": \"E0\", \"iteration\": 0, \"calc_operations_agent\": \"5828528592\"}}",
+        "output": "{\"outputs\": {\"result\": null, \"iteration\": 1}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x302d5125d7f99358"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:3"
+                ],
+                "metadata": {
+                    "langgraph_step": 3,
+                    "langgraph_node": "execute",
+                    "langgraph_triggers": [
+                        "plan"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "execute"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:00bccd98-5205-672e-ac7f-25ab8cc7c1c1"
+                },
+                "kwargs": {
+                    "name": "execute"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:3"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:31.155921Z",
+        "end_time": "2025-02-22T20:17:32.498356Z",
+        "metrics": {
+            "execution_time": 1.342435,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "22c96063-2984-467f-902c-2421e0ef013e",
+        "name": "0.3.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_0OSAoSBP39oaknZ7XEJzUhyQ",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":0}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x2fd61be3210e536b"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":0}",
+            "llm.request.functions.0.name": "expression_calculation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"number\"}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:32.503110Z",
+        "end_time": "2025-02-22T20:17:34.029383Z",
+        "metrics": {
+            "execution_time": 1.526273,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 723,
+            "num_output_tokens": 5,
+            "num_total_tokens": 728,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "b33795b3-dff7-4eea-b9b4-01948626e739",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "cb5d4b04-0175-4283-b24b-dbf7692a5479",
+        "name": "0.3.1:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a validation agent that takes a natural language mathematical problem, the proposed result, and verifies whether the result is correct. Your task is to return a JSON object with two fields:\n\n1. **evaluation_status**: \n- `\"Success\"` if the result solves the problem.\n- `\"Fail\"` if the result does not solve the problem.\n\n2. **explanation**:\n- A string explaining the reason for success or failure.\n\n### Examples:\n\n**Example 1:**\n\n**Input:**  \nProblem: \"What is the sum of 15, 20, and 35?\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The sum of 15, 20, and 35 is correctly calculated as 70.\"\n}\n\n---\n\n**Example 2:**\n\n**Input:**  \nProblem: \"Find the average of 5, 12, 18, and 25.\"  \nResult: 15  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Fail\",\n    \"explanation\": \"The average of 5, 12, 18, and 25 is calculated as (5 + 12 + 18 + 25) / 4 = 15. The provided result is incorrect.\"\n}\n\n---\n\n**Example 3:**\n\n**Input:**  \nProblem: \"Multiply 6 by 7, then add 14.\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"6 multiplied by 7 is 42, and adding 14 gives the correct result of 70.\"\n}\n\n---\n\n**Example 4:**\n\n**Input:**  \nProblem: \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\"  \nResult: 6  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"If the younger son is x years old, then the older son is 2x years old. Their combined age is x + 2x = 3x = 9, so x = 3. The older son is 2x = 6 years old.\"\n}\n\n---\n\n**Example 5:**\n\n**Input:**  \nProblem: \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\"  \nResult: 180  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The car's total distance is calculated as speed \u00d7 time = 60 miles per hour \u00d7 3 hours = 180 miles. The result is correct.\"\n}\n\n---\n\n### Instructions:\n1. Evaluate the provided result against the problem.\n2. Return a JSON object with the `evaluation_status` and an explanation.\n3. Handle a variety of mathematical problems (e.g., sums, averages, percentages, roots, word problems, etc.).\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Problem: Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\nResult: 0",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_Xz2R1F4RjKoQBTGhex0yk8ou",
+            "gen_ai.completion.0.tool_calls.0.name": "result_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"evaluation_status\":\"Success\",\"explanation\":\"Thomas starts with $10000 in $20 bills, which means he has 500 bills. He loses 100 bills, leaving him with 400 bills. Using half for a bill payment, he uses 200 bills, leaving 200 bills. After tripling his money, he effectively has 600 bills worth of money. Converting to $10 bills, he has 1200 $10 bills. Since the problem asks how many $5 bills he has, and he only has $10 bills, he has 0 $5 bills.\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x5d72b34865bcb840"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a validation agent that takes a natural language mathematical problem, the proposed result, and verifies whether the result is correct. Your task is to return a JSON object with two fields:\n\n1. **evaluation_status**: \n- `\"Success\"` if the result solves the problem.\n- `\"Fail\"` if the result does not solve the problem.\n\n2. **explanation**:\n- A string explaining the reason for success or failure.\n\n### Examples:\n\n**Example 1:**\n\n**Input:**  \nProblem: \"What is the sum of 15, 20, and 35?\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The sum of 15, 20, and 35 is correctly calculated as 70.\"\n}\n\n---\n\n**Example 2:**\n\n**Input:**  \nProblem: \"Find the average of 5, 12, 18, and 25.\"  \nResult: 15  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Fail\",\n    \"explanation\": \"The average of 5, 12, 18, and 25 is calculated as (5 + 12 + 18 + 25) / 4 = 15. The provided result is incorrect.\"\n}\n\n---\n\n**Example 3:**\n\n**Input:**  \nProblem: \"Multiply 6 by 7, then add 14.\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"6 multiplied by 7 is 42, and adding 14 gives the correct result of 70.\"\n}\n\n---\n\n**Example 4:**\n\n**Input:**  \nProblem: \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\"  \nResult: 6  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"If the younger son is x years old, then the older son is 2x years old. Their combined age is x + 2x = 3x = 9, so x = 3. The older son is 2x = 6 years old.\"\n}\n\n---\n\n**Example 5:**\n\n**Input:**  \nProblem: \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\"  \nResult: 180  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The car's total distance is calculated as speed \u00d7 time = 60 miles per hour \u00d7 3 hours = 180 miles. The result is correct.\"\n}\n\n---\n\n### Instructions:\n1. Evaluate the provided result against the problem.\n2. Return a JSON object with the `evaluation_status` and an explanation.\n3. Handle a variety of mathematical problems (e.g., sums, averages, percentages, roots, word problems, etc.).\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Problem: Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\nResult: 0",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "result_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"evaluation_status\":\"Success\",\"explanation\":\"Thomas starts with $10000 in $20 bills, which means he has 500 bills. He loses 100 bills, leaving him with 400 bills. Using half for a bill payment, he uses 200 bills, leaving 200 bills. After tripling his money, he effectively has 600 bills worth of money. Converting to $10 bills, he has 1200 $10 bills. Since the problem asks how many $5 bills he has, and he only has $10 bills, he has 0 $5 bills.\"}",
+            "llm.request.functions.0.name": "result_validation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"evaluation_status\": {\"type\": \"string\", \"enum\": [\"Success\", \"Fail\"]}, \"explanation\": {\"type\": \"string\"}}, \"required\": [\"evaluation_status\", \"explanation\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:34.036930Z",
+        "end_time": "2025-02-22T20:17:44.452360Z",
+        "metrics": {
+            "execution_time": 10.41543,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 750,
+            "num_output_tokens": 120,
+            "num_total_tokens": 870,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "b33795b3-dff7-4eea-b9b4-01948626e739",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "b33795b3-dff7-4eea-b9b4-01948626e739",
+        "name": "0.3:validate",
+        "tags": [
+            "LangGraph Node",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\", \"result\": null}], \"result_variable_name\": \"E0\", \"result\": null, \"iteration\": 1, \"calc_operations_agent\": \"5828528592\"}}",
+        "output": "{\"outputs\": {\"is_result_correct\": false}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x96285705ca390290"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:4"
+                ],
+                "metadata": {
+                    "langgraph_step": 4,
+                    "langgraph_node": "validate",
+                    "langgraph_triggers": [
+                        "execute"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "validate"
+                    ],
+                    "langgraph_checkpoint_ns": "validate:27c5184f-21ea-dd78-1da9-521f93b36f9c"
+                },
+                "kwargs": {
+                    "name": "validate"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:4"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:32.499109Z",
+        "end_time": "2025-02-22T20:17:44.457902Z",
+        "metrics": {
+            "execution_time": 11.958793,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 2,
+            "tool_calls": 0,
+            "interaction_length": 2,
+            "num_input_tokens": 1473,
+            "num_output_tokens": 125,
+            "num_total_tokens": 1598,
+            "tool_distribution": {},
+            "children": 2
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "e1183987-4d41-43b0-9461-d56eb3c4d168",
+        "name": "0.4.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_xWpwillg4LWZNn3SEMY1g0oh",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E0\",\"operation\":\"curly_brackets\",\"op1\":\"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\",\"op2\":\"\"}],\"new_expression\":\"E0\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x088204f2667bb98e"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E0\",\"operation\":\"curly_brackets\",\"op1\":\"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\",\"op2\":\"\"}],\"new_expression\":\"E0\"}",
+            "llm.request.functions.0.name": "extract_upper_level_brackets",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"parentheses\", \"square_brackets\", \"curly_brackets\"]}, \"op1\": {\"type\": \"string\"}, \"op2\": {\"type\": \"string\"}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}, \"new_expression\": {\"type\": \"string\"}}, \"required\": [\"operations\", \"new_expression\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:44.462287Z",
+        "end_time": "2025-02-22T20:17:45.783739Z",
+        "metrics": {
+            "execution_time": 1.321452,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 1287,
+            "num_output_tokens": 106,
+            "num_total_tokens": 1393,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "bbf7a37d-0455-42cc-9389-c8ba207ccc7d",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "d66abec4-4f57-453a-af2b-30a0d7aac7a3",
+        "name": "0.4.1:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "E0",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_tkROcerHPLqTogyOgoqiAQth",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[]}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x4312281a71484631"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "E0",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[]}",
+            "llm.request.functions.0.name": "extract_arithmetic_operations",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"A variable name assigned to the operation (e.g., E0, E1).\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"multiplication\", \"division\", \"addition\", \"subtraction\"], \"description\": \"The type of operation to be performed.\"}, \"op1\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The first operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}, \"op2\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The second operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}}, \"required\": [\"operations\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:45.791077Z",
+        "end_time": "2025-02-22T20:17:46.398361Z",
+        "metrics": {
+            "execution_time": 0.607284,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 500,
+            "num_output_tokens": 4,
+            "num_total_tokens": 504,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "bbf7a37d-0455-42cc-9389-c8ba207ccc7d",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "bbf7a37d-0455-42cc-9389-c8ba207ccc7d",
+        "name": "0.4:decompose",
+        "tags": [
+            "LangGraph Node",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\", \"result\": null}], \"result_variable_name\": \"E0\", \"result\": null, \"iteration\": 1, \"is_result_correct\": false, \"calc_operations_agent\": \"5828528592\"}}",
+        "output": "{\"outputs\": {\"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}]}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x92ee4bc89f82dedb"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:5"
+                ],
+                "metadata": {
+                    "langgraph_step": 5,
+                    "langgraph_node": "decompose",
+                    "langgraph_triggers": [
+                        "branch:validate:should_finish:decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "decompose"
+                    ],
+                    "langgraph_checkpoint_ns": "decompose:d1133c0f-8b96-dc71-347e-2e439945bf22"
+                },
+                "kwargs": {
+                    "name": "decompose"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:5"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:44.458883Z",
+        "end_time": "2025-02-22T20:17:46.402099Z",
+        "metrics": {
+            "execution_time": 1.943216,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 2,
+            "tool_calls": 0,
+            "interaction_length": 2,
+            "num_input_tokens": 1787,
+            "num_output_tokens": 110,
+            "num_total_tokens": 1897,
+            "tool_distribution": {},
+            "children": 2
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "c9d3e862-513c-4db5-893f-de451ee78003",
+        "name": "0.5:plan",
+        "tags": [
+            "LangGraph Node",
+            "tool_call"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}], \"result_variable_name\": \"E0\", \"result\": null, \"iteration\": 1, \"is_result_correct\": false, \"calc_operations_agent\": \"5828528592\"}}",
+        "output": "{\"outputs\": {\"calc_operations_agent\": \"5829001488\", \"result_variable_name\": \"E0\"}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xc8d4d2bcd623926e"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:6"
+                ],
+                "metadata": {
+                    "langgraph_step": 6,
+                    "langgraph_node": "plan",
+                    "langgraph_triggers": [
+                        "decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "plan"
+                    ],
+                    "langgraph_checkpoint_ns": "plan:2e0107e5-f377-e790-fbd5-3245e874974b"
+                },
+                "kwargs": {
+                    "name": "plan"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:6"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:46.403009Z",
+        "end_time": "2025-02-22T20:17:46.404556Z",
+        "metrics": {
+            "execution_time": 0.001547,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "plan": 1
+            }
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "a82a572e-d88c-4763-b73d-0debe37200d2",
+        "name": "0.6.0.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are given a textual problem or expression. Your task is to determine whether it is expected to produce exactly one numerical outcome and return a structured JSON output.\n\n### Rules for Classification:  \n1. If the expression involves a mathematical operation, a measurement, or a function that evaluates to a single number, classify it as valid.  \n- Examples:  \n    - \"5 + two\" \u2192 Valid  \n    - \"maximum of three and five\" \u2192 Valid  \n    - \"What is the distance from A to B?\" \u2192 Valid  \n\n2. If the expression asks for something non-numerical (e.g., names, colors, descriptions), classify it as invalid.  \n- Examples:  \n    - \"What is the color of the sky?\" \u2192 Invalid  \n    - \"What is the name of the capital of France?\" \u2192 Invalid  \n\n3. If the expression asks for multiple numbers instead of a single one (e.g., a range, a set, a list), classify it as invalid.  \n- Examples:  \n    - \"What are the maximum and minimum in the following sequence?\" \u2192 Invalid  \n    - \"List the prime numbers between 1 and 10\" \u2192 Invalid  \n\n4. If the question is open-ended, subjective, or procedural, classify it as invalid.  \n- Examples:  \n    - \"How do I calculate the area of a circle?\" \u2192 Invalid  \n    - \"Are all numbers divisible by 2 even?\" \u2192 Invalid  \n\n### Output Format:  \nReturn a JSON object with the following structure:  \n{\n\"result\": \"valid\" | \"invalid\"\n}\n\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Validate the following expression:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_nYCFeVEXOY23wseKIapveHPZ",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":\"Invalid\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x8cc4b8d640daea91"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are given a textual problem or expression. Your task is to determine whether it is expected to produce exactly one numerical outcome and return a structured JSON output.\n\n### Rules for Classification:  \n1. If the expression involves a mathematical operation, a measurement, or a function that evaluates to a single number, classify it as valid.  \n- Examples:  \n    - \"5 + two\" \u2192 Valid  \n    - \"maximum of three and five\" \u2192 Valid  \n    - \"What is the distance from A to B?\" \u2192 Valid  \n\n2. If the expression asks for something non-numerical (e.g., names, colors, descriptions), classify it as invalid.  \n- Examples:  \n    - \"What is the color of the sky?\" \u2192 Invalid  \n    - \"What is the name of the capital of France?\" \u2192 Invalid  \n\n3. If the expression asks for multiple numbers instead of a single one (e.g., a range, a set, a list), classify it as invalid.  \n- Examples:  \n    - \"What are the maximum and minimum in the following sequence?\" \u2192 Invalid  \n    - \"List the prime numbers between 1 and 10\" \u2192 Invalid  \n\n4. If the question is open-ended, subjective, or procedural, classify it as invalid.  \n- Examples:  \n    - \"How do I calculate the area of a circle?\" \u2192 Invalid  \n    - \"Are all numbers divisible by 2 even?\" \u2192 Invalid  \n\n### Output Format:  \nReturn a JSON object with the following structure:  \n{\n\"result\": \"valid\" | \"invalid\"\n}\n\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Validate the following expression:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":\"Invalid\"}",
+            "llm.request.functions.0.name": "expression_validation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"string\", \"enum\": [\"Valid\", \"Invalid\"]}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:46.412904Z",
+        "end_time": "2025-02-22T20:17:47.198962Z",
+        "metrics": {
+            "execution_time": 0.786058,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "fbddcbfa-1fff-43ea-8d0b-18a85011f62c",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "fbddcbfa-1fff-43ea-8d0b-18a85011f62c",
+        "name": "0.6.0:calc_E0",
+        "tags": [
+            "LangGraph Node",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}}}",
+        "output": "{\"outputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\", \"result\": null}}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xc6fa0bc8bcf03f09"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "calc_E0",
+                    "langgraph_triggers": [
+                        "start:calc_E0"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E0"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:caede5bd-a798-b330-d4c2-11c94b1a9477|calc_E0:9582e6d8-f04a-5984-f19c-a5bcc7a7a790",
+                    "checkpoint_ns": "execute:caede5bd-a798-b330-d4c2-11c94b1a9477"
+                },
+                "kwargs": {
+                    "name": "calc_E0"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:46.410065Z",
+        "end_time": "2025-02-22T20:17:47.205764Z",
+        "metrics": {
+            "execution_time": 0.795699,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [
+            {
+                "name": "manual instrumentation variable",
+                "timestamp": "2025-02-22T20:17:47.204787Z",
+                "attributes": {
+                    "type": "failure",
+                    "name": "invalid_expression",
+                    "value": "global_failure",
+                    "message": "LangchainLLMCalculator - The following expression Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have? is not expected to return a single numerical value"
+                },
+                "event_loc": 0,
+                "span_ids": [
+                    "0x2a9c2c9cb6922b5e",
+                    "0xfe69096976989df6",
+                    "0xc6fa0bc8bcf03f09"
+                ]
+            }
+        ],
+        "parent_id": "e7ee5821-facc-4854-9827-4d5a76c40d41",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": [
+            "LangchainLLMCalculator - The following expression Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have? is not expected to return a single numerical value"
+        ]
+    },
+    {
+        "id": "e7ee5821-facc-4854-9827-4d5a76c40d41",
+        "name": "0.6:execute",
+        "tags": [
+            "complex",
+            "LangGraph Workflow"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}], \"result_variable_name\": \"E0\", \"result\": null, \"iteration\": 1, \"is_result_correct\": false, \"calc_operations_agent\": \"5829001488\"}}",
+        "output": "{\"outputs\": {\"result\": null, \"iteration\": 2}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x915daa4f5075c3ad"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:7"
+                ],
+                "metadata": {
+                    "langgraph_step": 7,
+                    "langgraph_node": "execute",
+                    "langgraph_triggers": [
+                        "plan"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "execute"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:caede5bd-a798-b330-d4c2-11c94b1a9477"
+                },
+                "kwargs": {
+                    "name": "execute"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:7"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:46.405124Z",
+        "end_time": "2025-02-22T20:17:47.207102Z",
+        "metrics": {
+            "execution_time": 0.801978,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "722f22e6-c10c-42a1-a4e8-e77c3245814b",
+        "name": "0.7.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_P22PXCAEDBVHsfP7iMkBd4DV",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":0}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xf9d29c522dcf4a49"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":0}",
+            "llm.request.functions.0.name": "expression_calculation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"number\"}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:47.211532Z",
+        "end_time": "2025-02-22T20:17:48.337906Z",
+        "metrics": {
+            "execution_time": 1.126374,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 723,
+            "num_output_tokens": 5,
+            "num_total_tokens": 728,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "2bc7b263-a427-4438-a14e-64159a4ad894",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "5bf4662f-239f-4c63-9775-b37d0d5152d2",
+        "name": "0.7.1:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a validation agent that takes a natural language mathematical problem, the proposed result, and verifies whether the result is correct. Your task is to return a JSON object with two fields:\n\n1. **evaluation_status**: \n- `\"Success\"` if the result solves the problem.\n- `\"Fail\"` if the result does not solve the problem.\n\n2. **explanation**:\n- A string explaining the reason for success or failure.\n\n### Examples:\n\n**Example 1:**\n\n**Input:**  \nProblem: \"What is the sum of 15, 20, and 35?\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The sum of 15, 20, and 35 is correctly calculated as 70.\"\n}\n\n---\n\n**Example 2:**\n\n**Input:**  \nProblem: \"Find the average of 5, 12, 18, and 25.\"  \nResult: 15  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Fail\",\n    \"explanation\": \"The average of 5, 12, 18, and 25 is calculated as (5 + 12 + 18 + 25) / 4 = 15. The provided result is incorrect.\"\n}\n\n---\n\n**Example 3:**\n\n**Input:**  \nProblem: \"Multiply 6 by 7, then add 14.\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"6 multiplied by 7 is 42, and adding 14 gives the correct result of 70.\"\n}\n\n---\n\n**Example 4:**\n\n**Input:**  \nProblem: \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\"  \nResult: 6  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"If the younger son is x years old, then the older son is 2x years old. Their combined age is x + 2x = 3x = 9, so x = 3. The older son is 2x = 6 years old.\"\n}\n\n---\n\n**Example 5:**\n\n**Input:**  \nProblem: \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\"  \nResult: 180  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The car's total distance is calculated as speed \u00d7 time = 60 miles per hour \u00d7 3 hours = 180 miles. The result is correct.\"\n}\n\n---\n\n### Instructions:\n1. Evaluate the provided result against the problem.\n2. Return a JSON object with the `evaluation_status` and an explanation.\n3. Handle a variety of mathematical problems (e.g., sums, averages, percentages, roots, word problems, etc.).\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Problem: Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\nResult: 0",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_Ch2PQFqBY9979adjKU3dwWb7",
+            "gen_ai.completion.0.tool_calls.0.name": "result_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"evaluation_status\":\"Success\",\"explanation\":\"Thomas initially withdraws $10000 in $20 bills, which means he starts with 10000/20 = 500 bills. He loses 100 bills, leaving him with 400 bills. He uses half of the remaining 400 bills to pay for a bill, so he uses 200 bills, leaving him with 200 bills. Tripling his money doesn't affect the number of physical bills. He then converts all his bills to $10 bills, which still doesn't introduce $5 bills. Thus, Thomas has 0 five-dollar bills, making the result correct.\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x77ad15dfde4d96c0"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a validation agent that takes a natural language mathematical problem, the proposed result, and verifies whether the result is correct. Your task is to return a JSON object with two fields:\n\n1. **evaluation_status**: \n- `\"Success\"` if the result solves the problem.\n- `\"Fail\"` if the result does not solve the problem.\n\n2. **explanation**:\n- A string explaining the reason for success or failure.\n\n### Examples:\n\n**Example 1:**\n\n**Input:**  \nProblem: \"What is the sum of 15, 20, and 35?\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The sum of 15, 20, and 35 is correctly calculated as 70.\"\n}\n\n---\n\n**Example 2:**\n\n**Input:**  \nProblem: \"Find the average of 5, 12, 18, and 25.\"  \nResult: 15  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Fail\",\n    \"explanation\": \"The average of 5, 12, 18, and 25 is calculated as (5 + 12 + 18 + 25) / 4 = 15. The provided result is incorrect.\"\n}\n\n---\n\n**Example 3:**\n\n**Input:**  \nProblem: \"Multiply 6 by 7, then add 14.\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"6 multiplied by 7 is 42, and adding 14 gives the correct result of 70.\"\n}\n\n---\n\n**Example 4:**\n\n**Input:**  \nProblem: \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\"  \nResult: 6  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"If the younger son is x years old, then the older son is 2x years old. Their combined age is x + 2x = 3x = 9, so x = 3. The older son is 2x = 6 years old.\"\n}\n\n---\n\n**Example 5:**\n\n**Input:**  \nProblem: \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\"  \nResult: 180  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The car's total distance is calculated as speed \u00d7 time = 60 miles per hour \u00d7 3 hours = 180 miles. The result is correct.\"\n}\n\n---\n\n### Instructions:\n1. Evaluate the provided result against the problem.\n2. Return a JSON object with the `evaluation_status` and an explanation.\n3. Handle a variety of mathematical problems (e.g., sums, averages, percentages, roots, word problems, etc.).\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Problem: Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\nResult: 0",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "result_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"evaluation_status\":\"Success\",\"explanation\":\"Thomas initially withdraws $10000 in $20 bills, which means he starts with 10000/20 = 500 bills. He loses 100 bills, leaving him with 400 bills. He uses half of the remaining 400 bills to pay for a bill, so he uses 200 bills, leaving him with 200 bills. Tripling his money doesn't affect the number of physical bills. He then converts all his bills to $10 bills, which still doesn't introduce $5 bills. Thus, Thomas has 0 five-dollar bills, making the result correct.\"}",
+            "llm.request.functions.0.name": "result_validation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"evaluation_status\": {\"type\": \"string\", \"enum\": [\"Success\", \"Fail\"]}, \"explanation\": {\"type\": \"string\"}}, \"required\": [\"evaluation_status\", \"explanation\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:48.345149Z",
+        "end_time": "2025-02-22T20:17:51.149465Z",
+        "metrics": {
+            "execution_time": 2.804316,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 750,
+            "num_output_tokens": 125,
+            "num_total_tokens": 875,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "2bc7b263-a427-4438-a14e-64159a4ad894",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "2bc7b263-a427-4438-a14e-64159a4ad894",
+        "name": "0.7:validate",
+        "tags": [
+            "LangGraph Node",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\", \"result\": null}], \"result_variable_name\": \"E0\", \"result\": null, \"iteration\": 2, \"is_result_correct\": false, \"calc_operations_agent\": \"5829001488\"}}",
+        "output": "{\"outputs\": {\"is_result_correct\": false}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x73d3ca3c18eb652b"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:8"
+                ],
+                "metadata": {
+                    "langgraph_step": 8,
+                    "langgraph_node": "validate",
+                    "langgraph_triggers": [
+                        "execute"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "validate"
+                    ],
+                    "langgraph_checkpoint_ns": "validate:62a64143-d9ea-f6e8-a99a-8098acf1e2cc"
+                },
+                "kwargs": {
+                    "name": "validate"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:8"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:47.207797Z",
+        "end_time": "2025-02-22T20:17:51.154644Z",
+        "metrics": {
+            "execution_time": 3.946847,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 2,
+            "tool_calls": 0,
+            "interaction_length": 2,
+            "num_input_tokens": 1473,
+            "num_output_tokens": 130,
+            "num_total_tokens": 1603,
+            "tool_distribution": {},
+            "children": 2
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "a25fe9f9-d18e-4b9c-b7ee-390aba9e6ac0",
+        "name": "0.8.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_d1hfEbK6CuzYSVRC9TfbbgUr",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E0\",\"operation\":\"curly_brackets\",\"op1\":\"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\",\"op2\":\"\"}],\"new_expression\":\"E0\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x5366dd5288f924c2"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E0\",\"operation\":\"curly_brackets\",\"op1\":\"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\",\"op2\":\"\"}],\"new_expression\":\"E0\"}",
+            "llm.request.functions.0.name": "extract_upper_level_brackets",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"parentheses\", \"square_brackets\", \"curly_brackets\"]}, \"op1\": {\"type\": \"string\"}, \"op2\": {\"type\": \"string\"}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}, \"new_expression\": {\"type\": \"string\"}}, \"required\": [\"operations\", \"new_expression\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:51.158884Z",
+        "end_time": "2025-02-22T20:17:52.950122Z",
+        "metrics": {
+            "execution_time": 1.791238,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 1287,
+            "num_output_tokens": 106,
+            "num_total_tokens": 1393,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "65a08984-21b8-4a48-9d1c-dd7cd7e3e043",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "305b6477-46ae-4a9f-9b05-d368a637ae2f",
+        "name": "0.8.1:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "E0",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_OOtTCr5ewuz7s5efJDgSQrEb",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[]}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xfb66cd7eca475067"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "E0",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[]}",
+            "llm.request.functions.0.name": "extract_arithmetic_operations",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"A variable name assigned to the operation (e.g., E0, E1).\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"multiplication\", \"division\", \"addition\", \"subtraction\"], \"description\": \"The type of operation to be performed.\"}, \"op1\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The first operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}, \"op2\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The second operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}}, \"required\": [\"operations\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:52.957303Z",
+        "end_time": "2025-02-22T20:17:53.665631Z",
+        "metrics": {
+            "execution_time": 0.708328,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 500,
+            "num_output_tokens": 4,
+            "num_total_tokens": 504,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "65a08984-21b8-4a48-9d1c-dd7cd7e3e043",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "65a08984-21b8-4a48-9d1c-dd7cd7e3e043",
+        "name": "0.8:decompose",
+        "tags": [
+            "LangGraph Node",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\", \"result\": null}], \"result_variable_name\": \"E0\", \"result\": null, \"iteration\": 2, \"is_result_correct\": false, \"calc_operations_agent\": \"5829001488\"}}",
+        "output": "{\"outputs\": {\"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}]}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xa87ace7d89fd5060"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:9"
+                ],
+                "metadata": {
+                    "langgraph_step": 9,
+                    "langgraph_node": "decompose",
+                    "langgraph_triggers": [
+                        "branch:validate:should_finish:decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "decompose"
+                    ],
+                    "langgraph_checkpoint_ns": "decompose:fe08bd5d-b6d5-ce04-2b27-689724cc5c2f"
+                },
+                "kwargs": {
+                    "name": "decompose"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:9"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:51.155560Z",
+        "end_time": "2025-02-22T20:17:53.669754Z",
+        "metrics": {
+            "execution_time": 2.514194,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 2,
+            "tool_calls": 0,
+            "interaction_length": 2,
+            "num_input_tokens": 1787,
+            "num_output_tokens": 110,
+            "num_total_tokens": 1897,
+            "tool_distribution": {},
+            "children": 2
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "6d38651e-297e-4468-a2a2-c101f49e215f",
+        "name": "0.9:plan",
+        "tags": [
+            "LangGraph Node",
+            "tool_call"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}], \"result_variable_name\": \"E0\", \"result\": null, \"iteration\": 2, \"is_result_correct\": false, \"calc_operations_agent\": \"5829001488\"}}",
+        "output": "{\"outputs\": {\"calc_operations_agent\": \"5829323408\", \"result_variable_name\": \"E0\"}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x10055996cabab4c1"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:10"
+                ],
+                "metadata": {
+                    "langgraph_step": 10,
+                    "langgraph_node": "plan",
+                    "langgraph_triggers": [
+                        "decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "plan"
+                    ],
+                    "langgraph_checkpoint_ns": "plan:6e4b0c6a-9714-1f85-be28-37d6c164446f"
+                },
+                "kwargs": {
+                    "name": "plan"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:10"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:53.670801Z",
+        "end_time": "2025-02-22T20:17:53.672549Z",
+        "metrics": {
+            "execution_time": 0.001748,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "plan": 1
+            }
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "c2bc70e8-988f-4a13-b0a1-fffab9d90c9d",
+        "name": "0.10.0.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are given a textual problem or expression. Your task is to determine whether it is expected to produce exactly one numerical outcome and return a structured JSON output.\n\n### Rules for Classification:  \n1. If the expression involves a mathematical operation, a measurement, or a function that evaluates to a single number, classify it as valid.  \n- Examples:  \n    - \"5 + two\" \u2192 Valid  \n    - \"maximum of three and five\" \u2192 Valid  \n    - \"What is the distance from A to B?\" \u2192 Valid  \n\n2. If the expression asks for something non-numerical (e.g., names, colors, descriptions), classify it as invalid.  \n- Examples:  \n    - \"What is the color of the sky?\" \u2192 Invalid  \n    - \"What is the name of the capital of France?\" \u2192 Invalid  \n\n3. If the expression asks for multiple numbers instead of a single one (e.g., a range, a set, a list), classify it as invalid.  \n- Examples:  \n    - \"What are the maximum and minimum in the following sequence?\" \u2192 Invalid  \n    - \"List the prime numbers between 1 and 10\" \u2192 Invalid  \n\n4. If the question is open-ended, subjective, or procedural, classify it as invalid.  \n- Examples:  \n    - \"How do I calculate the area of a circle?\" \u2192 Invalid  \n    - \"Are all numbers divisible by 2 even?\" \u2192 Invalid  \n\n### Output Format:  \nReturn a JSON object with the following structure:  \n{\n\"result\": \"valid\" | \"invalid\"\n}\n\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Validate the following expression:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_KOdk154n5vb4ZOaN6DjcRiQK",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":\"Invalid\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x40f60ab1fb7a256d"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are given a textual problem or expression. Your task is to determine whether it is expected to produce exactly one numerical outcome and return a structured JSON output.\n\n### Rules for Classification:  \n1. If the expression involves a mathematical operation, a measurement, or a function that evaluates to a single number, classify it as valid.  \n- Examples:  \n    - \"5 + two\" \u2192 Valid  \n    - \"maximum of three and five\" \u2192 Valid  \n    - \"What is the distance from A to B?\" \u2192 Valid  \n\n2. If the expression asks for something non-numerical (e.g., names, colors, descriptions), classify it as invalid.  \n- Examples:  \n    - \"What is the color of the sky?\" \u2192 Invalid  \n    - \"What is the name of the capital of France?\" \u2192 Invalid  \n\n3. If the expression asks for multiple numbers instead of a single one (e.g., a range, a set, a list), classify it as invalid.  \n- Examples:  \n    - \"What are the maximum and minimum in the following sequence?\" \u2192 Invalid  \n    - \"List the prime numbers between 1 and 10\" \u2192 Invalid  \n\n4. If the question is open-ended, subjective, or procedural, classify it as invalid.  \n- Examples:  \n    - \"How do I calculate the area of a circle?\" \u2192 Invalid  \n    - \"Are all numbers divisible by 2 even?\" \u2192 Invalid  \n\n### Output Format:  \nReturn a JSON object with the following structure:  \n{\n\"result\": \"valid\" | \"invalid\"\n}\n\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Validate the following expression:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":\"Invalid\"}",
+            "llm.request.functions.0.name": "expression_validation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"string\", \"enum\": [\"Valid\", \"Invalid\"]}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:53.681571Z",
+        "end_time": "2025-02-22T20:17:54.011969Z",
+        "metrics": {
+            "execution_time": 0.330398,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "2a8cea26-caaa-4cf6-89d5-4aaef39f3564",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "2a8cea26-caaa-4cf6-89d5-4aaef39f3564",
+        "name": "0.10.0:calc_E0",
+        "tags": [
+            "LangGraph Node",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}}}",
+        "output": "{\"outputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\", \"result\": null}}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xa650994432b23872"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "calc_E0",
+                    "langgraph_triggers": [
+                        "start:calc_E0"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E0"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:fbf7aff3-aeb9-b03d-6c5b-16ca3d8fdf7e|calc_E0:576d1944-58d1-4ca2-75f9-f8b5700b62be",
+                    "checkpoint_ns": "execute:fbf7aff3-aeb9-b03d-6c5b-16ca3d8fdf7e"
+                },
+                "kwargs": {
+                    "name": "calc_E0"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:53.678266Z",
+        "end_time": "2025-02-22T20:17:54.018417Z",
+        "metrics": {
+            "execution_time": 0.340151,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [
+            {
+                "name": "manual instrumentation variable",
+                "timestamp": "2025-02-22T20:17:54.017422Z",
+                "attributes": {
+                    "type": "failure",
+                    "name": "invalid_expression",
+                    "value": "global_failure",
+                    "message": "LangchainLLMCalculator - The following expression Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have? is not expected to return a single numerical value"
+                },
+                "event_loc": 0,
+                "span_ids": [
+                    "0x5c899989eb18311c",
+                    "0xff018cf4b4b243ea",
+                    "0xa650994432b23872"
+                ]
+            }
+        ],
+        "parent_id": "4a2363ea-418e-4c62-8249-84a16b426668",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": [
+            "LangchainLLMCalculator - The following expression Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have? is not expected to return a single numerical value"
+        ]
+    },
+    {
+        "id": "4a2363ea-418e-4c62-8249-84a16b426668",
+        "name": "0.10:execute",
+        "tags": [
+            "complex",
+            "LangGraph Workflow"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"{Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?}\", \"operations\": [{\"name\": \"E0\", \"operation\": \"curly_brackets\", \"op1\": \"Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\", \"op2\": \"\"}], \"result_variable_name\": \"E0\", \"result\": null, \"iteration\": 2, \"is_result_correct\": false, \"calc_operations_agent\": \"5829323408\"}}",
+        "output": "{\"outputs\": {\"result\": null, \"iteration\": 3}}",
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xc66da919a4373285"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:11"
+                ],
+                "metadata": {
+                    "langgraph_step": 11,
+                    "langgraph_node": "execute",
+                    "langgraph_triggers": [
+                        "plan"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "execute"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:fbf7aff3-aeb9-b03d-6c5b-16ca3d8fdf7e"
+                },
+                "kwargs": {
+                    "name": "execute"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:11"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:53.673143Z",
+        "end_time": "2025-02-22T20:17:54.019839Z",
+        "metrics": {
+            "execution_time": 0.346696,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 458,
+            "num_output_tokens": 5,
+            "num_total_tokens": 463,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "1d93b44e-772b-478f-8133-ebd0dca0ec2a",
+        "name": "0.11:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_gjz5PnUQAHK6nxhL3CRyAwHL",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":0}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0x6c633da98280e3f0"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\nThomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":0}",
+            "llm.request.functions.0.name": "expression_calculation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"number\"}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:54.023814Z",
+        "end_time": "2025-02-22T20:17:55.098312Z",
+        "metrics": {
+            "execution_time": 1.074498,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 723,
+            "num_output_tokens": 5,
+            "num_total_tokens": 728,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "2ef9a73e-0155-437c-bdcd-04f934792a09",
+        "name": "0.12:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a validation agent that takes a natural language mathematical problem, the proposed result, and verifies whether the result is correct. Your task is to return a JSON object with two fields:\n\n1. **evaluation_status**: \n- `\"Success\"` if the result solves the problem.\n- `\"Fail\"` if the result does not solve the problem.\n\n2. **explanation**:\n- A string explaining the reason for success or failure.\n\n### Examples:\n\n**Example 1:**\n\n**Input:**  \nProblem: \"What is the sum of 15, 20, and 35?\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The sum of 15, 20, and 35 is correctly calculated as 70.\"\n}\n\n---\n\n**Example 2:**\n\n**Input:**  \nProblem: \"Find the average of 5, 12, 18, and 25.\"  \nResult: 15  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Fail\",\n    \"explanation\": \"The average of 5, 12, 18, and 25 is calculated as (5 + 12 + 18 + 25) / 4 = 15. The provided result is incorrect.\"\n}\n\n---\n\n**Example 3:**\n\n**Input:**  \nProblem: \"Multiply 6 by 7, then add 14.\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"6 multiplied by 7 is 42, and adding 14 gives the correct result of 70.\"\n}\n\n---\n\n**Example 4:**\n\n**Input:**  \nProblem: \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\"  \nResult: 6  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"If the younger son is x years old, then the older son is 2x years old. Their combined age is x + 2x = 3x = 9, so x = 3. The older son is 2x = 6 years old.\"\n}\n\n---\n\n**Example 5:**\n\n**Input:**  \nProblem: \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\"  \nResult: 180  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The car's total distance is calculated as speed \u00d7 time = 60 miles per hour \u00d7 3 hours = 180 miles. The result is correct.\"\n}\n\n---\n\n### Instructions:\n1. Evaluate the provided result against the problem.\n2. Return a JSON object with the `evaluation_status` and an explanation.\n3. Handle a variety of mathematical problems (e.g., sums, averages, percentages, roots, word problems, etc.).\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Problem: Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\nResult: 0",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_GWNk0CmEb8AnEMPTAXOm0NGP",
+            "gen_ai.completion.0.tool_calls.0.name": "result_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"evaluation_status\":\"Success\",\"explanation\":\"Thomas starts with $10,000 in 20 dollar bills, which means he has 500 bills (10,000 / 20 = 500). He loses 100 bills, leaving him with 400 bills. He uses half of these, leaving him with 200 bills. Tripling his money, he now effectively has 600 bills worth of money. When converted to 10 dollar bills, he would have 1200 bills (600 x 2). The problem asks how many 5 dollar bills he has, which is 0 since he only has 10 dollar bills.\"}"
+        },
+        "log_reference": {
+            "trace_id": "0x4a1c78107498fb5629e0c209a448689b",
+            "span_id": "0xebd63e15c82adb6a"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a validation agent that takes a natural language mathematical problem, the proposed result, and verifies whether the result is correct. Your task is to return a JSON object with two fields:\n\n1. **evaluation_status**: \n- `\"Success\"` if the result solves the problem.\n- `\"Fail\"` if the result does not solve the problem.\n\n2. **explanation**:\n- A string explaining the reason for success or failure.\n\n### Examples:\n\n**Example 1:**\n\n**Input:**  \nProblem: \"What is the sum of 15, 20, and 35?\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The sum of 15, 20, and 35 is correctly calculated as 70.\"\n}\n\n---\n\n**Example 2:**\n\n**Input:**  \nProblem: \"Find the average of 5, 12, 18, and 25.\"  \nResult: 15  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Fail\",\n    \"explanation\": \"The average of 5, 12, 18, and 25 is calculated as (5 + 12 + 18 + 25) / 4 = 15. The provided result is incorrect.\"\n}\n\n---\n\n**Example 3:**\n\n**Input:**  \nProblem: \"Multiply 6 by 7, then add 14.\"  \nResult: 70  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"6 multiplied by 7 is 42, and adding 14 gives the correct result of 70.\"\n}\n\n---\n\n**Example 4:**\n\n**Input:**  \nProblem: \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\"  \nResult: 6  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"If the younger son is x years old, then the older son is 2x years old. Their combined age is x + 2x = 3x = 9, so x = 3. The older son is 2x = 6 years old.\"\n}\n\n---\n\n**Example 5:**\n\n**Input:**  \nProblem: \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\"  \nResult: 180  \n\n**Output:**  \n{\n    \"evaluation_status\": \"Success\",\n    \"explanation\": \"The car's total distance is calculated as speed \u00d7 time = 60 miles per hour \u00d7 3 hours = 180 miles. The result is correct.\"\n}\n\n---\n\n### Instructions:\n1. Evaluate the provided result against the problem.\n2. Return a JSON object with the `evaluation_status` and an explanation.\n3. Handle a variety of mathematical problems (e.g., sums, averages, percentages, roots, word problems, etc.).\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Problem: Thomas withdraws $10000 in 20 dollar bills from the bank account.  He loses 100 bills while getting home.  After that, he uses half of the remaining bills to pay for a bill.  Thomas then triples his money.  He then converts all his bills to 10 dollar bills.  How many 5 dollar bills does he have?\nResult: 0",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "result_validation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"evaluation_status\":\"Success\",\"explanation\":\"Thomas starts with $10,000 in 20 dollar bills, which means he has 500 bills (10,000 / 20 = 500). He loses 100 bills, leaving him with 400 bills. He uses half of these, leaving him with 200 bills. Tripling his money, he now effectively has 600 bills worth of money. When converted to 10 dollar bills, he would have 1200 bills (600 x 2). The problem asks how many 5 dollar bills he has, which is 0 since he only has 10 dollar bills.\"}",
+            "llm.request.functions.0.name": "result_validation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"evaluation_status\": {\"type\": \"string\", \"enum\": [\"Success\", \"Fail\"]}, \"explanation\": {\"type\": \"string\"}}, \"required\": [\"evaluation_status\", \"explanation\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T20:17:55.105371Z",
+        "end_time": "2025-02-22T20:17:56.500733Z",
+        "metrics": {
+            "execution_time": 1.395362,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 750,
+            "num_output_tokens": 129,
+            "num_total_tokens": 879,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "21e9bb44-63e0-4ad8-9eb1-6af370260f98",
+        "name": "0:_ROOT",
+        "tags": [
+            "complex",
+            "LangGraph Workflow"
+        ],
+        "input": [],
+        "output": [],
+        "log_reference": {
+            "trace_id": ""
+        },
+        "status": "CREATED",
+        "attributes": {},
+        "metadata": {},
+        "start_time": "2025-02-22T20:17:18.796519Z",
+        "end_time": "2025-02-22T20:17:56.504883Z",
+        "metrics": {
+            "execution_time": 37.708364,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression",
+                    "invalid_expression",
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 15,
+            "tool_calls": 3,
+            "interaction_length": 18,
+            "num_input_tokens": 11154,
+            "num_output_tokens": 734,
+            "num_total_tokens": 11888,
+            "tool_distribution": {
+                "plan": 3
+            },
+            "children": 13
+        },
+        "events": [],
+        "parent_id": null,
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    }
+]

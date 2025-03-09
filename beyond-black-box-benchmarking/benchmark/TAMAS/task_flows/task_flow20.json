@@ -1,0 +1,2232 @@
+[
+    {
+        "id": "ff01b152-d0f6-4298-af90-f417b098cafa",
+        "name": "0.0.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "10+(5*7/1.4-30)+9",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_qscoiVeBzeReIjh3uFqqXXHW",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E0\",\"operation\":\"parentheses\",\"op1\":\"5*7/1.4-30\",\"op2\":\"\"}],\"new_expression\":\"10+E0+9\"}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xc373f231a0b97fe4"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "10+(5*7/1.4-30)+9",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E0\",\"operation\":\"parentheses\",\"op1\":\"5*7/1.4-30\",\"op2\":\"\"}],\"new_expression\":\"10+E0+9\"}",
+            "llm.request.functions.0.name": "extract_upper_level_brackets",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"parentheses\", \"square_brackets\", \"curly_brackets\"]}, \"op1\": {\"type\": \"string\"}, \"op2\": {\"type\": \"string\"}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}, \"new_expression\": {\"type\": \"string\"}}, \"required\": [\"operations\", \"new_expression\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:05.008634Z",
+        "end_time": "2025-02-22T10:18:06.864641Z",
+        "metrics": {
+            "execution_time": 1.856007,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 1224,
+            "num_output_tokens": 43,
+            "num_total_tokens": 1267,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "1cc4d934-2db7-4070-b7d4-881429a4b121",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "0c94e330-3acd-4236-bb87-a93c72ac7b01",
+        "name": "0.0.1:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "10+E0+9",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_X41KOP5O3X9R8ftFamqroJdu",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E1\",\"operation\":\"addition\",\"op1\":10,\"op2\":\"E0\"},{\"name\":\"E2\",\"operation\":\"addition\",\"op1\":\"E1\",\"op2\":9}]}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xfcf411a0399bd344"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "10+E0+9",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E1\",\"operation\":\"addition\",\"op1\":10,\"op2\":\"E0\"},{\"name\":\"E2\",\"operation\":\"addition\",\"op1\":\"E1\",\"op2\":9}]}",
+            "llm.request.functions.0.name": "extract_arithmetic_operations",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"A variable name assigned to the operation (e.g., E0, E1).\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"multiplication\", \"division\", \"addition\", \"subtraction\"], \"description\": \"The type of operation to be performed.\"}, \"op1\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The first operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}, \"op2\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The second operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}}, \"required\": [\"operations\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:06.871771Z",
+        "end_time": "2025-02-22T10:18:07.904282Z",
+        "metrics": {
+            "execution_time": 1.032511,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 504,
+            "num_output_tokens": 45,
+            "num_total_tokens": 549,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "1cc4d934-2db7-4070-b7d4-881429a4b121",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "1cc4d934-2db7-4070-b7d4-881429a4b121",
+        "name": "0.0:decompose",
+        "tags": [
+            "complex",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"10+(5*7/1.4-30)+9\", \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"operations\": [{\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\"}, {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\"}, {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9}]}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x420b307041c76e91"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "decompose",
+                    "langgraph_triggers": [
+                        "start:decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "decompose"
+                    ],
+                    "langgraph_checkpoint_ns": "decompose:0b61b979-3d24-75fc-befe-f54116a7a12e"
+                },
+                "kwargs": {
+                    "name": "decompose"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:04.997379Z",
+        "end_time": "2025-02-22T10:18:07.908757Z",
+        "metrics": {
+            "execution_time": 2.911378,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 2,
+            "tool_calls": 0,
+            "interaction_length": 2,
+            "num_input_tokens": 1728,
+            "num_output_tokens": 88,
+            "num_total_tokens": 1816,
+            "tool_distribution": {},
+            "children": 2
+        },
+        "events": [],
+        "parent_id": "9b0e34b8-4416-4244-aa7c-54a1f26f29e0",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "6f773763-97f8-4d16-accd-7d74388a4112",
+        "name": "0.1:plan",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"10+(5*7/1.4-30)+9\", \"operations\": [{\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\"}, {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\"}, {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9}], \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"calc_operations_agent\": \"5767759504\", \"result_variable_name\": \"E2\"}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xdc47c6eac2324a4f"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:2"
+                ],
+                "metadata": {
+                    "langgraph_step": 2,
+                    "langgraph_node": "plan",
+                    "langgraph_triggers": [
+                        "decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "plan"
+                    ],
+                    "langgraph_checkpoint_ns": "plan:94e5f4fc-b991-eea7-1e65-367a159eb203"
+                },
+                "kwargs": {
+                    "name": "plan"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:2"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:07.913382Z",
+        "end_time": "2025-02-22T10:18:07.917108Z",
+        "metrics": {
+            "execution_time": 0.003726,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "plan": 1
+            }
+        },
+        "events": [],
+        "parent_id": "9b0e34b8-4416-4244-aa7c-54a1f26f29e0",
+        "dependent_ids": [
+            "1cc4d934-2db7-4070-b7d4-881429a4b121"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "07954547-535e-41f2-ba59-83b09f0f16e7",
+        "name": "0.2.0.0.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "5*7/1.4-30",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_E3RS7qAH10pmZlf5c6dXEU1E",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[],\"new_expression\":\"5*7/1.4-30\"}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xef2ef6f28c6ff62b"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "5*7/1.4-30",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[],\"new_expression\":\"5*7/1.4-30\"}",
+            "llm.request.functions.0.name": "extract_upper_level_brackets",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"parentheses\", \"square_brackets\", \"curly_brackets\"]}, \"op1\": {\"type\": \"string\"}, \"op2\": {\"type\": \"string\"}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}, \"new_expression\": {\"type\": \"string\"}}, \"required\": [\"operations\", \"new_expression\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:07.929708Z",
+        "end_time": "2025-02-22T10:18:08.778309Z",
+        "metrics": {
+            "execution_time": 0.848601,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 1220,
+            "num_output_tokens": 17,
+            "num_total_tokens": 1237,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "50cda1e4-b9a8-4c58-b79e-0b18a084663a",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "0bde361f-0498-478d-a199-6f228f280229",
+        "name": "0.2.0.0.1:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "5*7/1.4-30",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_gxFHyvQWPERp4ORyIuhdS92A",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E2\",\"operation\":\"multiplication\",\"op1\":5,\"op2\":7},{\"name\":\"E3\",\"operation\":\"division\",\"op1\":\"E2\",\"op2\":1.4},{\"name\":\"E4\",\"operation\":\"subtraction\",\"op1\":\"E3\",\"op2\":30}]}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x37659839eee6103e"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "5*7/1.4-30",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E2\",\"operation\":\"multiplication\",\"op1\":5,\"op2\":7},{\"name\":\"E3\",\"operation\":\"division\",\"op1\":\"E2\",\"op2\":1.4},{\"name\":\"E4\",\"operation\":\"subtraction\",\"op1\":\"E3\",\"op2\":30}]}",
+            "llm.request.functions.0.name": "extract_arithmetic_operations",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"A variable name assigned to the operation (e.g., E0, E1).\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"multiplication\", \"division\", \"addition\", \"subtraction\"], \"description\": \"The type of operation to be performed.\"}, \"op1\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The first operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}, \"op2\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The second operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}}, \"required\": [\"operations\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:08.785415Z",
+        "end_time": "2025-02-22T10:18:10.015749Z",
+        "metrics": {
+            "execution_time": 1.230334,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 507,
+            "num_output_tokens": 68,
+            "num_total_tokens": 575,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "50cda1e4-b9a8-4c58-b79e-0b18a084663a",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "50cda1e4-b9a8-4c58-b79e-0b18a084663a",
+        "name": "0.2.0.0:decompose",
+        "tags": [
+            "complex",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"5*7/1.4-30\", \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}]}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xbd4b147ae0e41785"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "decompose",
+                    "langgraph_triggers": [
+                        "start:decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "decompose"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|decompose:78f391a3-a209-1732-30c7-4a64f857efe3",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "decompose"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:07.926784Z",
+        "end_time": "2025-02-22T10:18:10.020287Z",
+        "metrics": {
+            "execution_time": 2.093503,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 2,
+            "tool_calls": 0,
+            "interaction_length": 2,
+            "num_input_tokens": 1727,
+            "num_output_tokens": 85,
+            "num_total_tokens": 1812,
+            "tool_distribution": {},
+            "children": 2
+        },
+        "events": [],
+        "parent_id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "1d88db70-58fc-4059-ba4e-cc961608240c",
+        "name": "0.2.0.1:plan",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"5*7/1.4-30\", \"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}], \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"calc_operations_agent\": \"5768508304\", \"result_variable_name\": \"E4\"}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x1d77cc003bc38f32"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:2"
+                ],
+                "metadata": {
+                    "langgraph_step": 2,
+                    "langgraph_node": "plan",
+                    "langgraph_triggers": [
+                        "decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "plan"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|plan:a3965f88-c0c1-4506-d5ea-2b4787914004",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "plan"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:2"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:10.021373Z",
+        "end_time": "2025-02-22T10:18:10.023683Z",
+        "metrics": {
+            "execution_time": 0.00231,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "plan": 1
+            }
+        },
+        "events": [],
+        "parent_id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "dependent_ids": [
+            "50cda1e4-b9a8-4c58-b79e-0b18a084663a"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "b0c7eb87-26d0-4931-856d-eae582f8ec1c",
+        "name": "0.2.0.2.0:calc_E2",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7}, \"E3\": {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, \"E4\": {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}}}",
+        "output": "{\"outputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x7994d937b54dc7c8"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "calc_E2",
+                    "langgraph_triggers": [
+                        "start:calc_E2"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E2"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|execute:d142896f-98da-bfb1-9203-e390b7df71f9|calc_E2:0eded1e4-0ba9-b7c5-4200-86ab978290da",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E2"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:10.031331Z",
+        "end_time": "2025-02-22T10:18:10.032333Z",
+        "metrics": {
+            "execution_time": 0.001002,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "calc_E2": 1
+            }
+        },
+        "events": [],
+        "parent_id": "773ecca8-8ef8-4c1f-ba24-0dde9ee8502c",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "647a05f3-0933-4720-8c49-f3caffade751",
+        "name": "0.2.0.2.1:calc_E3",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}, \"E3\": {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, \"E4\": {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}}}",
+        "output": "{\"outputs\": {\"E3\": {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4, \"result\": 25.0}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x99c4d07ac70dc337"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:2"
+                ],
+                "metadata": {
+                    "langgraph_step": 2,
+                    "langgraph_node": "calc_E3",
+                    "langgraph_triggers": [
+                        "calc_E2"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E3"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|execute:d142896f-98da-bfb1-9203-e390b7df71f9|calc_E3:ad0496a6-6c2b-b463-435c-59c20852ba57",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E3"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:2"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:10.032852Z",
+        "end_time": "2025-02-22T10:18:10.033488Z",
+        "metrics": {
+            "execution_time": 0.000636,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "calc_E3": 1
+            }
+        },
+        "events": [],
+        "parent_id": "773ecca8-8ef8-4c1f-ba24-0dde9ee8502c",
+        "dependent_ids": [
+            "b0c7eb87-26d0-4931-856d-eae582f8ec1c"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "9505fe59-b95f-48e5-a8b2-17bae19030bf",
+        "name": "0.2.0.2.2.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\n25.0-30",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_b3RYGuAmajAti1jsrVhcQDB4",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":25.0   }"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x95a120891d2dbff0"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\n25.0-30",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":25.0   }",
+            "llm.request.functions.0.name": "expression_calculation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"number\"}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:10.037202Z",
+        "end_time": "2025-02-22T10:18:10.835483Z",
+        "metrics": {
+            "execution_time": 0.798281,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 654,
+            "num_output_tokens": 10,
+            "num_total_tokens": 664,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "de958d2c-9aeb-4472-9397-115b3d84f94b",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "de958d2c-9aeb-4472-9397-115b3d84f94b",
+        "name": "0.2.0.2.2:calc_E4",
+        "tags": [
+            "complex",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}, \"E3\": {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4, \"result\": 25.0}, \"E4\": {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}}}",
+        "output": "{\"outputs\": {\"E4\": {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30, \"result\": 25.0}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x10405cf56e612470"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:3"
+                ],
+                "metadata": {
+                    "langgraph_step": 3,
+                    "langgraph_node": "calc_E4",
+                    "langgraph_triggers": [
+                        "calc_E3"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E4"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|execute:d142896f-98da-bfb1-9203-e390b7df71f9|calc_E4:ca1f2d0f-9c32-cb64-b23d-da7a07502eda",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E4"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:3"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:10.033975Z",
+        "end_time": "2025-02-22T10:18:10.839765Z",
+        "metrics": {
+            "execution_time": 0.80579,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 654,
+            "num_output_tokens": 10,
+            "num_total_tokens": 664,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [],
+        "parent_id": "773ecca8-8ef8-4c1f-ba24-0dde9ee8502c",
+        "dependent_ids": [
+            "647a05f3-0933-4720-8c49-f3caffade751"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "773ecca8-8ef8-4c1f-ba24-0dde9ee8502c",
+        "name": "0.2.0.2:execute",
+        "tags": [
+            "LangGraph Workflow",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"5*7/1.4-30\", \"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}], \"result_variable_name\": \"E4\", \"iteration\": 0, \"calc_operations_agent\": \"5768508304\"}}",
+        "output": "{\"outputs\": {\"result\": 25.0, \"iteration\": 1}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x0750878520030534"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:3"
+                ],
+                "metadata": {
+                    "langgraph_step": 3,
+                    "langgraph_node": "execute",
+                    "langgraph_triggers": [
+                        "plan"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "execute"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|execute:d142896f-98da-bfb1-9203-e390b7df71f9",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "execute"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:3"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:10.024390Z",
+        "end_time": "2025-02-22T10:18:10.841377Z",
+        "metrics": {
+            "execution_time": 0.816987,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 2,
+            "interaction_length": 3,
+            "num_input_tokens": 654,
+            "num_output_tokens": 10,
+            "num_total_tokens": 664,
+            "tool_distribution": {
+                "calc_E2": 1,
+                "calc_E3": 1
+            },
+            "children": 3
+        },
+        "events": [],
+        "parent_id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "dependent_ids": [
+            "1d88db70-58fc-4059-ba4e-cc961608240c"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "6c4eaee3-1997-4d79-8f7c-7c2411a64a96",
+        "name": "0.2.0.3:validate",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"5*7/1.4-30\", \"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4, \"result\": 25.0}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30, \"result\": 25.0}], \"result_variable_name\": \"E4\", \"result\": 25.0, \"iteration\": 1, \"calc_operations_agent\": \"5768508304\"}}",
+        "output": "{\"outputs\": {\"is_result_correct\": false}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x29716b1575a7f6b1"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:4"
+                ],
+                "metadata": {
+                    "langgraph_step": 4,
+                    "langgraph_node": "validate",
+                    "langgraph_triggers": [
+                        "execute"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "validate"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|validate:0edd35bb-c837-2306-42b3-a910c51e552a",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "validate"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:4"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:10.842422Z",
+        "end_time": "2025-02-22T10:18:10.844063Z",
+        "metrics": {
+            "execution_time": 0.001641,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "validate": 1
+            }
+        },
+        "events": [],
+        "parent_id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "dependent_ids": [
+            "773ecca8-8ef8-4c1f-ba24-0dde9ee8502c"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "c621a765-8d6b-477b-8952-3bcc6c68d995",
+        "name": "0.2.0.4.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "5*7/1.4-30",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_PtZh0m6Fjzr5oR3dZQ625LXn",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[],\"new_expression\":\"5*7/1.4-30\"}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x1ad02f4ffa2f046d"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Your task is to analyze a given mathematical expression and identify **only the top-level** bracketed segments. The expression may include pre-existing variable references of the form E0, E1, etc., representing sub-expressions that have already been calculated.\n\n            **Bracket Types and Rules:**\n            1. **Brackets:**\n            - Parentheses: `( ... )`\n            - Square Brackets: `[ ... ]`\n            - Curly Brackets: `{ ... }`\n            2. Treat square brackets `[]` and curly brackets `{}` as equivalent to parentheses `()` for grouping and preserving the order of operations.\n            3. Do not interchange, omit, or remove any type of bracket. Each bracket type must be used consistently for its intended purpose.\n            4. Format all mathematical expressions with clear and consistent grouping, using the same type of bracket for each nesting level.\n\n            **Processing Instructions:**\n            - **Identification:** Scan the input expression and extract every **top-level** bracketed segment. Ignore any brackets nested inside these segments; they should remain intact as part of the content.\n            - **New Operation Creation:** For each top-level bracket found, create a new operation entry with the following properties:\n            - `\"operation\"`: One of `\"parentheses\"`, `\"square_brackets\"`, or `\"curly_brackets\"`, depending on the type of the bracket.\n            - `\"name\"`: A unique variable identifier in the format `E{n}`. **Important:** If the input expression already contains variable references (e.g., `E0`, `E1`, etc.), then the index `n` for any new operation must be strictly greater than the highest index already present. For example, if the expression contains `E0` and `E1`, the first new operation must be named `E2`.\n            - `\"op1\"`: The exact content inside the top-level brackets (do not alter or decompose it, even if it contains nested brackets).\n            - `\"op2\"`: An empty string `\"\"`.\n            - **Expression Replacement:** Replace each top-level bracketed segment in the original expression with its corresponding variable name (e.g., `E0`, `E1`, etc.) to form a new expression.\n            - **Final Expression Requirements:** The final `\"new_expression\"` must not contain any parentheses, square brackets, or curly brackets. It should include only:\n            - Numeric values (e.g., `2`, `10`, `3.5`)\n            - Standard arithmetic operators (`+`, `-`, `*`, `/`)\n            - References to sub-expressions (e.g., `E0`, `E1`, etc.)\n\n            **Output Format:**\n            Return the result as a JSON object with the following structure:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"parentheses | square_brackets | curly_brackets\",\n                \"op1\": \"string with bracket content\",\n                \"op2\": \"\"\n                },\n                ...\n            ],\n            \"new_expression\": \"string with bracket references replaced by E0, E1, etc.\"\n            }\n\n            ---\n\n            ### Example Inputs and Expected Outputs\n\n            1) Example Input:\n            (5 + {one plus two}+[6+7]-(9*4)) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"5 + {one plus two}+[6+7]-(9*4)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 - 2\"\n            }\n\n            2) Example Input:\n            {some text} + (3+4)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E0\",\n                    \"operation\": \"curly_brackets\",\n                    \"op1\": \"some text\",\n                    \"op2\": \"\"\n                },\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"3+4\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E0 + E1\"\n            }\n\n            3) Example Input:\n            [E1 - (E2 - 3)] * 2\n\n            (Here, [E1 - (E2 - 3)] is the only top-level bracket. The nested parentheses (8 - 3)\n                is not decomposed because it is inside the top-level square brackets.)\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E3\",\n                    \"operation\": \"square_brackets\",\n                    \"op1\": \"E1 - (E2 - 3)\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E3 * 2\"\n            }\n\n            4) Example Input:\n            (E0*{two + one}+1) - 2\n\n            Example Output:\n            {\n                \"operations\": [\n                {\n                    \"name\": \"E1\",\n                    \"operation\": \"parentheses\",\n                    \"op1\": \"E0*{two + one}+1\",\n                    \"op2\": \"\"\n                }\n                ],\n                \"new_expression\": \"E1 - 2\"\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "5*7/1.4-30",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_upper_level_brackets",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[],\"new_expression\":\"5*7/1.4-30\"}",
+            "llm.request.functions.0.name": "extract_upper_level_brackets",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"parentheses\", \"square_brackets\", \"curly_brackets\"]}, \"op1\": {\"type\": \"string\"}, \"op2\": {\"type\": \"string\"}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}, \"new_expression\": {\"type\": \"string\"}}, \"required\": [\"operations\", \"new_expression\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:10.847999Z",
+        "end_time": "2025-02-22T10:18:11.551553Z",
+        "metrics": {
+            "execution_time": 0.703554,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 1220,
+            "num_output_tokens": 17,
+            "num_total_tokens": 1237,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "7f826541-a594-4950-baab-9dc0c09d5eba",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "efeef850-0ba1-4601-bccc-4132f3f82081",
+        "name": "0.2.0.4.1:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "5*7/1.4-30",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_vQY81s7cD5QVWD8CroYi8gJB",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E2\",\"operation\":\"multiplication\",\"op1\":5,\"op2\":7},{\"name\":\"E3\",\"operation\":\"division\",\"op1\":\"E2\",\"op2\":1.4},{\"name\":\"E4\",\"operation\":\"subtraction\",\"op1\":\"E3\",\"op2\":30}]}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x742c377ab3ecbe0e"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\n            You are an expert mathematician. Now you will receive an expression\n            that may contain references like E0, E1, etc. (which represent bracketed\n            sub-expressions from a previous step). Your task is to decompose this\n            expression into the top-level mathematical operations (multiplication,\n            division, addition, subtraction), in that order of precedence (left to right\n            for those with equal precedence).\n\n            Instructions:\n            - Treat any reference (E0, E1, etc.) as a single operand that must not\n                be decomposed further.\n            - Only decompose the expression for multiplication, division, addition,\n                subtraction at the top level, respecting standard math precedence.\n            - For each operation, produce a JSON object:\n                {\n                    \"name\": \"string\",  // e.g., E2, E3, ...\n                    \"operation\": \"multiplication | division | addition | subtraction\",\n                    \"op1\": \"number or reference to E#\",\n                    \"op2\": \"number or reference to E#\"\n                }\n            - Ensure that the generated names are unique and do not conflict with any existing references in the input. Each new operation name must be greater than the highest reference number already present in the expression.\n            \n            Return your result as:\n            {\n            \"operations\": [\n                {\n                \"name\": \"string\",\n                \"operation\": \"multiplication | division | addition | subtraction\",\n                \"op1\": \"...\",\n                \"op2\": \"...\"\n                }, ...\n            ]\n            }\n        ",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "5*7/1.4-30",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "extract_arithmetic_operations",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"operations\":[{\"name\":\"E2\",\"operation\":\"multiplication\",\"op1\":5,\"op2\":7},{\"name\":\"E3\",\"operation\":\"division\",\"op1\":\"E2\",\"op2\":1.4},{\"name\":\"E4\",\"operation\":\"subtraction\",\"op1\":\"E3\",\"op2\":30}]}",
+            "llm.request.functions.0.name": "extract_arithmetic_operations",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"operations\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"A variable name assigned to the operation (e.g., E0, E1).\"}, \"operation\": {\"type\": \"string\", \"enum\": [\"multiplication\", \"division\", \"addition\", \"subtraction\"], \"description\": \"The type of operation to be performed.\"}, \"op1\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The first operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}, \"op2\": {\"oneOf\": [{\"type\": \"number\", \"description\": \"The second operand, a numerical value.\"}, {\"type\": \"string\", \"description\": \"A reference to another variable (e.g., E0, E1) or a numeric string.\"}]}}, \"required\": [\"name\", \"operation\", \"op1\", \"op2\"], \"additionalProperties\": false}}}, \"required\": [\"operations\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:11.559964Z",
+        "end_time": "2025-02-22T10:18:12.675372Z",
+        "metrics": {
+            "execution_time": 1.115408,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 507,
+            "num_output_tokens": 68,
+            "num_total_tokens": 575,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "7f826541-a594-4950-baab-9dc0c09d5eba",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "7f826541-a594-4950-baab-9dc0c09d5eba",
+        "name": "0.2.0.4:decompose",
+        "tags": [
+            "complex",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"5*7/1.4-30\", \"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4, \"result\": 25.0}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30, \"result\": 25.0}], \"result_variable_name\": \"E4\", \"result\": 25.0, \"iteration\": 1, \"is_result_correct\": false, \"calc_operations_agent\": \"5768508304\"}}",
+        "output": "{\"outputs\": {\"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}]}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xd253194ca0a742b7"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:5"
+                ],
+                "metadata": {
+                    "langgraph_step": 5,
+                    "langgraph_node": "decompose",
+                    "langgraph_triggers": [
+                        "branch:validate:should_finish:decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "decompose"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|decompose:90ff5b54-9592-e1af-aa10-30ce0b4f9753",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "decompose"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:5"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:10.844640Z",
+        "end_time": "2025-02-22T10:18:12.678040Z",
+        "metrics": {
+            "execution_time": 1.8334,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 2,
+            "tool_calls": 0,
+            "interaction_length": 2,
+            "num_input_tokens": 1727,
+            "num_output_tokens": 85,
+            "num_total_tokens": 1812,
+            "tool_distribution": {},
+            "children": 2
+        },
+        "events": [],
+        "parent_id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "dependent_ids": [
+            "6c4eaee3-1997-4d79-8f7c-7c2411a64a96"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "b6af42c8-4e9f-448a-b1f9-5b4b9acd275a",
+        "name": "0.2.0.5:plan",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"5*7/1.4-30\", \"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}], \"result_variable_name\": \"E4\", \"result\": 25.0, \"iteration\": 1, \"is_result_correct\": false, \"calc_operations_agent\": \"5768508304\"}}",
+        "output": "{\"outputs\": {\"calc_operations_agent\": \"5768812560\", \"result_variable_name\": \"E4\"}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x61611e151bb40ca0"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:6"
+                ],
+                "metadata": {
+                    "langgraph_step": 6,
+                    "langgraph_node": "plan",
+                    "langgraph_triggers": [
+                        "decompose"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "plan"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|plan:d290c366-491f-e78a-06fc-74a6becbcfc9",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "plan"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:6"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:12.678978Z",
+        "end_time": "2025-02-22T10:18:12.681127Z",
+        "metrics": {
+            "execution_time": 0.002149,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "plan": 1
+            }
+        },
+        "events": [],
+        "parent_id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "dependent_ids": [
+            "7f826541-a594-4950-baab-9dc0c09d5eba"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "e11f1134-362f-4dc9-8cf6-102d846a40a5",
+        "name": "0.2.0.6.0:calc_E2",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7}, \"E3\": {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, \"E4\": {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}}}",
+        "output": "{\"outputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x26a287f3ab31e76c"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "calc_E2",
+                    "langgraph_triggers": [
+                        "start:calc_E2"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E2"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|execute:72400a93-9199-7e7f-17ef-5e454ff177b5|calc_E2:5429eefd-a410-6dab-dc96-ef3827ca6243",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E2"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:12.688784Z",
+        "end_time": "2025-02-22T10:18:12.689489Z",
+        "metrics": {
+            "execution_time": 0.000705,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "calc_E2": 1
+            }
+        },
+        "events": [],
+        "parent_id": "e85bbc9d-9f87-45fb-bf39-4dd189cd31d7",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "2e5a5227-e5a4-4202-be72-ebdc88ff5cff",
+        "name": "0.2.0.6.1:calc_E3",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}, \"E3\": {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, \"E4\": {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}}}",
+        "output": "{\"outputs\": {\"E3\": {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4, \"result\": 25.0}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x3fc934dcbe0f7971"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:2"
+                ],
+                "metadata": {
+                    "langgraph_step": 2,
+                    "langgraph_node": "calc_E3",
+                    "langgraph_triggers": [
+                        "calc_E2"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E3"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|execute:72400a93-9199-7e7f-17ef-5e454ff177b5|calc_E3:920a0d38-8b0a-c975-9a25-911da6ddad30",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E3"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:2"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:12.690027Z",
+        "end_time": "2025-02-22T10:18:12.690688Z",
+        "metrics": {
+            "execution_time": 0.000661,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "calc_E3": 1
+            }
+        },
+        "events": [],
+        "parent_id": "e85bbc9d-9f87-45fb-bf39-4dd189cd31d7",
+        "dependent_ids": [
+            "e11f1134-362f-4dc9-8cf6-102d846a40a5"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "423cf30e-de7c-49a5-861d-0db5e21b5b85",
+        "name": "0.2.0.6.2.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\n25.0-30",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_EVKI54eSDSXnbse16xHvAWJj",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":-5.0}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xcb65a03b1298c8b2"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\n25.0-30",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":-5.0}",
+            "llm.request.functions.0.name": "expression_calculation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"number\"}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:12.694413Z",
+        "end_time": "2025-02-22T10:18:13.042191Z",
+        "metrics": {
+            "execution_time": 0.347778,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 654,
+            "num_output_tokens": 8,
+            "num_total_tokens": 662,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "a3175de1-604b-4892-a053-0b26e49ff68d",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "a3175de1-604b-4892-a053-0b26e49ff68d",
+        "name": "0.2.0.6.2:calc_E4",
+        "tags": [
+            "complex",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}, \"E3\": {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4, \"result\": 25.0}, \"E4\": {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}}}",
+        "output": "{\"outputs\": {\"E4\": {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30, \"result\": -5.0}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x3b4223b553e5bfe9"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:3"
+                ],
+                "metadata": {
+                    "langgraph_step": 3,
+                    "langgraph_node": "calc_E4",
+                    "langgraph_triggers": [
+                        "calc_E3"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E4"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|execute:72400a93-9199-7e7f-17ef-5e454ff177b5|calc_E4:996e747e-dbae-93f7-5061-6f16eff1647f",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E4"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:3"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:12.691220Z",
+        "end_time": "2025-02-22T10:18:13.046209Z",
+        "metrics": {
+            "execution_time": 0.354989,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 654,
+            "num_output_tokens": 8,
+            "num_total_tokens": 662,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [],
+        "parent_id": "e85bbc9d-9f87-45fb-bf39-4dd189cd31d7",
+        "dependent_ids": [
+            "2e5a5227-e5a4-4202-be72-ebdc88ff5cff"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "e85bbc9d-9f87-45fb-bf39-4dd189cd31d7",
+        "name": "0.2.0.6:execute",
+        "tags": [
+            "LangGraph Workflow",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"5*7/1.4-30\", \"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30}], \"result_variable_name\": \"E4\", \"result\": 25.0, \"iteration\": 1, \"is_result_correct\": false, \"calc_operations_agent\": \"5768812560\"}}",
+        "output": "{\"outputs\": {\"result\": -5.0, \"iteration\": 2}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x719098feebcafd6f"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:7"
+                ],
+                "metadata": {
+                    "langgraph_step": 7,
+                    "langgraph_node": "execute",
+                    "langgraph_triggers": [
+                        "plan"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "execute"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|execute:72400a93-9199-7e7f-17ef-5e454ff177b5",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "execute"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:7"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:12.681822Z",
+        "end_time": "2025-02-22T10:18:13.047728Z",
+        "metrics": {
+            "execution_time": 0.365906,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 2,
+            "interaction_length": 3,
+            "num_input_tokens": 654,
+            "num_output_tokens": 8,
+            "num_total_tokens": 662,
+            "tool_distribution": {
+                "calc_E2": 1,
+                "calc_E3": 1
+            },
+            "children": 3
+        },
+        "events": [],
+        "parent_id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "dependent_ids": [
+            "b6af42c8-4e9f-448a-b1f9-5b4b9acd275a"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "632cd347-c4b7-421e-9b1c-104e4cf18be3",
+        "name": "0.2.0.7:validate",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"5*7/1.4-30\", \"operations\": [{\"name\": \"E2\", \"operation\": \"multiplication\", \"op1\": 5, \"op2\": 7, \"result\": 35}, {\"name\": \"E3\", \"operation\": \"division\", \"op1\": \"E2\", \"op2\": 1.4, \"result\": 25.0}, {\"name\": \"E4\", \"operation\": \"subtraction\", \"op1\": \"E3\", \"op2\": 30, \"result\": -5.0}], \"result_variable_name\": \"E4\", \"result\": -5.0, \"iteration\": 2, \"is_result_correct\": false, \"calc_operations_agent\": \"5768812560\"}}",
+        "output": "{\"outputs\": {\"is_result_correct\": true}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x6f8a4527e40e3758"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:8"
+                ],
+                "metadata": {
+                    "langgraph_step": 8,
+                    "langgraph_node": "validate",
+                    "langgraph_triggers": [
+                        "execute"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "validate"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e|validate:20d10ab6-1469-97e0-33f7-26710907a0c6",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "validate"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:8"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:13.048476Z",
+        "end_time": "2025-02-22T10:18:13.049947Z",
+        "metrics": {
+            "execution_time": 0.001471,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "validate": 1
+            }
+        },
+        "events": [],
+        "parent_id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "dependent_ids": [
+            "e85bbc9d-9f87-45fb-bf39-4dd189cd31d7"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "cc052d86-44e1-4935-8e6e-1c9ede660224",
+        "name": "0.2.0:calc_E0",
+        "tags": [
+            "LangGraph Workflow",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\"}, \"E1\": {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\"}, \"E2\": {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9}}}",
+        "output": "{\"outputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\", \"result\": -5.0}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xddfbd2d381f8b76d"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "calc_E0",
+                    "langgraph_triggers": [
+                        "start:calc_E0"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E0"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E0:7ede1a87-ee80-d4c5-f28c-37a3277c589e",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E0"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:07.922154Z",
+        "end_time": "2025-02-22T10:18:13.051526Z",
+        "metrics": {
+            "execution_time": 5.129372,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 6,
+            "tool_calls": 8,
+            "interaction_length": 14,
+            "num_input_tokens": 4762,
+            "num_output_tokens": 188,
+            "num_total_tokens": 4950,
+            "tool_distribution": {
+                "plan": 2,
+                "calc_E2": 2,
+                "calc_E3": 2,
+                "validate": 2
+            },
+            "children": 8
+        },
+        "events": [],
+        "parent_id": "2a9f6c6b-65c5-46ef-ad77-9fe7fa4143e4",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "d53d488b-af74-44ae-a2f2-67f2b859d8f2",
+        "name": "0.2.1.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\n10+-5.0",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_gnEIgo3gO8wrGccGAOVMCTKn",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":5.0}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x46145894cc1249c9"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\n10+-5.0",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":5.0}",
+            "llm.request.functions.0.name": "expression_calculation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"number\"}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:13.055191Z",
+        "end_time": "2025-02-22T10:18:13.649817Z",
+        "metrics": {
+            "execution_time": 0.594626,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 654,
+            "num_output_tokens": 7,
+            "num_total_tokens": 661,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "b3dedac7-bcaf-486b-b509-879b21e6e41e",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "b3dedac7-bcaf-486b-b509-879b21e6e41e",
+        "name": "0.2.1:calc_E1",
+        "tags": [
+            "complex",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\", \"result\": -5.0}, \"E1\": {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\"}, \"E2\": {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9}}}",
+        "output": "{\"outputs\": {\"E1\": {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\", \"result\": 5.0}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x24753458be4a74ef"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:2"
+                ],
+                "metadata": {
+                    "langgraph_step": 2,
+                    "langgraph_node": "calc_E1",
+                    "langgraph_triggers": [
+                        "calc_E0"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E1"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E1:cd525930-7880-2fd9-696c-7e469c33b6ef",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E1"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:2"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:13.052108Z",
+        "end_time": "2025-02-22T10:18:13.654007Z",
+        "metrics": {
+            "execution_time": 0.601899,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 654,
+            "num_output_tokens": 7,
+            "num_total_tokens": 661,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [],
+        "parent_id": "2a9f6c6b-65c5-46ef-ad77-9fe7fa4143e4",
+        "dependent_ids": [
+            "cc052d86-44e1-4935-8e6e-1c9ede660224"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "bdb425e4-2073-4a21-aca9-6a6ca161e624",
+        "name": "0.2.2.0:openai.chat",
+        "tags": [
+            "llm_call"
+        ],
+        "input": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\n5.0+9",
+            "gen_ai.prompt.prompt_filter_results": "[{\"prompt_index\": 0, \"content_filter_results\": {\"hate\": {\"filtered\": false, \"severity\": \"safe\"}, \"self_harm\": {\"filtered\": false, \"severity\": \"safe\"}, \"sexual\": {\"filtered\": false, \"severity\": \"safe\"}, \"violence\": {\"filtered\": false, \"severity\": \"safe\"}}}]"
+        },
+        "output": {
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.tool_calls.0.id": "call_yLAPo0v71Ea3aTE8lpvkiCDP",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":14.0}"
+        },
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x161833cea89b2b89"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "gen_ai.prompt.0.role": "system",
+            "gen_ai.prompt.0.content": "\nYou are a helpful AI mathematician designed to solve a wide variety of mathematical problems efficiently. You will be provided with textual math questions that may include numbers, words, or a combination of both. Your goal is to interpret the question accurately, translate it into proper mathematical expressions, perform the necessary calculations, and output only the final numeric result.\n\n### Key Guidelines:\n1. **Parse Precisely**: Identify and interpret mathematical operations accurately, including:\n- Addition (e.g., \"5 plus 3\")\n- Subtraction (e.g., \"10 minus 4\")\n- Multiplication (e.g., \"4 times two\")\n- Division (e.g., \"divide 144 by 12\")\n- Other operations like percentages, square roots, or ratios as specified.\n2. **Handle Verbal Descriptions**: Convert natural language descriptions into mathematical expressions (e.g., \"four times three\" becomes `4 * 3`).\n3. **Step-by-Step Understanding**: For multi-step problems, break them down logically, solve them internally, and output only the final numeric result.\n4. **Output Format**: Always provide the answer as a single numerical value (e.g., `8`, `144.5`, `3.14159`).\n\n### Example Questions and Expected Behavior:\n1. \"What is the sum of 15, 20, and 35?\" \u2192 `70`\n2. \"Find the average of 5, 12, 18, and 25.\" \u2192 `15`\n3. \"Multiply 6 by 7, then add 14.\" \u2192 `56 + 14 = 70`\n4. \"Divide 144 by 12.\" \u2192 `12`\n5. \"What is 30% of 200?\" \u2192 `60`\n6. \"Find the square root of 121.\" \u2192 `11`\n7. \"If the older son is twice as old as the younger son and their combined age is 9, what is the age of the older son?\" \u2192 `6`\n8. \"4 times two\" \u2192 `8`\n9. \"5 plus 3\" \u2192 `8`\n10. \"A car travels 60 miles per hour for 3 hours. How far did it travel in total?\" \u2192 `180`\n\n### Notes:\n- Ensure mathematical expressions are parsed correctly, even if the input uses words instead of symbols (e.g., \"times\" for multiplication, \"plus\" for addition).\n- Think step by step to address complex problems\n- Avoid additional explanations or formatting; return only the numeric answer.\n- If an input is unclear or invalid, respond with rusult value of null. \n\n### Additional Instructions:\n- Pay attention to the context of numbers written as words (e.g., \"two\" is `2`, \"fourteen\" is `14`).\n- Prioritize accurate calculations and proper numeric conversions in all cases.\n",
+            "gen_ai.prompt.1.role": "user",
+            "gen_ai.prompt.1.content": "Calculate result for the following problem:\n5.0+9",
+            "gen_ai.completion.0.role": "assistant",
+            "gen_ai.completion.0.finish_reason": "stop",
+            "gen_ai.completion.0.tool_calls.0.name": "expression_calculation_respose",
+            "gen_ai.completion.0.tool_calls.0.arguments": "{\"result\":14.0}",
+            "llm.request.functions.0.name": "expression_calculation_respose",
+            "llm.request.functions.0.parameters": "{\"type\": \"object\", \"properties\": {\"result\": {\"type\": \"number\"}}, \"required\": [\"result\"], \"additionalProperties\": false}"
+        },
+        "metadata": {
+            "gen_ai.request.model": "gpt-4o-2024-08-06",
+            "gen_ai.request.temperature": 0.7,
+            "gen_ai.response.model": "gpt-4o-2024-08-06"
+        },
+        "start_time": "2025-02-22T10:18:13.658424Z",
+        "end_time": "2025-02-22T10:18:14.190042Z",
+        "metrics": {
+            "execution_time": 0.531618,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 654,
+            "num_output_tokens": 7,
+            "num_total_tokens": 661,
+            "tool_distribution": {}
+        },
+        "events": [],
+        "parent_id": "37f8bf2e-9586-465b-b859-4a39dcef908b",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "37f8bf2e-9586-465b-b859-4a39dcef908b",
+        "name": "0.2.2:calc_E2",
+        "tags": [
+            "complex",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"E0\": {\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\", \"result\": -5.0}, \"E1\": {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\", \"result\": 5.0}, \"E2\": {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9}}}",
+        "output": "{\"outputs\": {\"E2\": {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9, \"result\": 14.0}}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0x73e24bec1cf8f4d2"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:3"
+                ],
+                "metadata": {
+                    "langgraph_step": 3,
+                    "langgraph_node": "calc_E2",
+                    "langgraph_triggers": [
+                        "calc_E1"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "calc_E2"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c|calc_E2:d2a4e65b-17b6-b66c-b74d-66ae33458f42",
+                    "checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "calc_E2"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:3"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:13.654951Z",
+        "end_time": "2025-02-22T10:18:14.193734Z",
+        "metrics": {
+            "execution_time": 0.538783,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 1,
+            "tool_calls": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 654,
+            "num_output_tokens": 7,
+            "num_total_tokens": 661,
+            "tool_distribution": {},
+            "children": 1
+        },
+        "events": [],
+        "parent_id": "2a9f6c6b-65c5-46ef-ad77-9fe7fa4143e4",
+        "dependent_ids": [
+            "b3dedac7-bcaf-486b-b509-879b21e6e41e"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "2a9f6c6b-65c5-46ef-ad77-9fe7fa4143e4",
+        "name": "0.2:execute",
+        "tags": [
+            "LangGraph Workflow",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"10+(5*7/1.4-30)+9\", \"operations\": [{\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\"}, {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\"}, {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9}], \"result_variable_name\": \"E2\", \"iteration\": 0, \"calc_operations_agent\": \"5767759504\"}}",
+        "output": "{\"outputs\": {\"result\": 14.0, \"iteration\": 1}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xfac214d51878ff12"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:3"
+                ],
+                "metadata": {
+                    "langgraph_step": 3,
+                    "langgraph_node": "execute",
+                    "langgraph_triggers": [
+                        "plan"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "execute"
+                    ],
+                    "langgraph_checkpoint_ns": "execute:19b2faff-d6ea-e436-1c35-dcf836e9542c"
+                },
+                "kwargs": {
+                    "name": "execute"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:3"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:07.917753Z",
+        "end_time": "2025-02-22T10:18:14.195211Z",
+        "metrics": {
+            "execution_time": 6.277458,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 8,
+            "tool_calls": 8,
+            "interaction_length": 16,
+            "num_input_tokens": 6070,
+            "num_output_tokens": 202,
+            "num_total_tokens": 6272,
+            "tool_distribution": {
+                "plan": 2,
+                "calc_E2": 2,
+                "calc_E3": 2,
+                "validate": 2
+            },
+            "children": 3
+        },
+        "events": [],
+        "parent_id": "9b0e34b8-4416-4244-aa7c-54a1f26f29e0",
+        "dependent_ids": [
+            "6f773763-97f8-4d16-accd-7d74388a4112"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "5d347bc4-1ca1-4a67-bbb4-d0ee773357fc",
+        "name": "0.3:validate",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"10+(5*7/1.4-30)+9\", \"operations\": [{\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\", \"result\": -5.0}, {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\", \"result\": 5.0}, {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9, \"result\": 14.0}], \"result_variable_name\": \"E2\", \"result\": 14.0, \"iteration\": 1, \"calc_operations_agent\": \"5767759504\"}}",
+        "output": "{\"outputs\": {\"is_result_correct\": true}}",
+        "log_reference": {
+            "trace_id": "0xd0c9ba485186ff2229712f799ab96d73",
+            "span_id": "0xbd1393e99230ccfa"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:4"
+                ],
+                "metadata": {
+                    "langgraph_step": 4,
+                    "langgraph_node": "validate",
+                    "langgraph_triggers": [
+                        "execute"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "validate"
+                    ],
+                    "langgraph_checkpoint_ns": "validate:f5db9104-ee65-c0a1-49a1-aeeb505bdc39"
+                },
+                "kwargs": {
+                    "name": "validate"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:4"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:14.195888Z",
+        "end_time": "2025-02-22T10:18:14.197020Z",
+        "metrics": {
+            "execution_time": 0.001132,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "validate": 1
+            }
+        },
+        "events": [],
+        "parent_id": "9b0e34b8-4416-4244-aa7c-54a1f26f29e0",
+        "dependent_ids": [
+            "2a9f6c6b-65c5-46ef-ad77-9fe7fa4143e4"
+        ],
+        "graph_id": null,
+        "issues": []
+    },
+    {
+        "id": "9b0e34b8-4416-4244-aa7c-54a1f26f29e0",
+        "name": "0:_ROOT",
+        "tags": [
+            "LangGraph Workflow",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"10+(5*7/1.4-30)+9\", \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"expression\": \"10+(5*7/1.4-30)+9\", \"operations\": [{\"name\": \"E0\", \"operation\": \"parentheses\", \"op1\": \"5*7/1.4-30\", \"op2\": \"\", \"result\": -5.0}, {\"name\": \"E1\", \"operation\": \"addition\", \"op1\": 10, \"op2\": \"E0\", \"result\": 5.0}, {\"name\": \"E2\", \"operation\": \"addition\", \"op1\": \"E1\", \"op2\": 9, \"result\": 14.0}], \"result_variable_name\": \"E2\", \"result\": 14.0, \"iteration\": 1, \"is_result_correct\": true, \"calc_operations_agent\": \"5767759504\"}}",
+        "log_reference": {
+            "trace_id": ""
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [],
+                "metadata": {},
+                "kwargs": {
+                    "name": "LangGraph"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": []
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-22T10:18:04.705631Z",
+        "end_time": "2025-02-22T10:18:14.197437Z",
+        "metrics": {
+            "execution_time": 9.491806,
+            "failure_analysis": {
+                "outcome": "success",
+                "global_failure": false,
+                "failure_type": []
+            },
+            "llm_calls": 10,
+            "tool_calls": 10,
+            "interaction_length": 20,
+            "num_input_tokens": 7798,
+            "num_output_tokens": 290,
+            "num_total_tokens": 8088,
+            "tool_distribution": {
+                "plan": 3,
+                "calc_E2": 2,
+                "calc_E3": 2,
+                "validate": 3
+            },
+            "children": 4
+        },
+        "events": [],
+        "parent_id": null,
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    }
+]

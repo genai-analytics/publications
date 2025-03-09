@@ -1,0 +1,1 @@
+task,failure_type,error_message0.0:decompose,instruction_violation,"LLM attempt:1 failed to extract upper level brackets for {Triple the sum of 5 and 1, then subtract 10. What is the result?}*2-(6/3), Generated expression is incorrect: E0*2-(6/3)"

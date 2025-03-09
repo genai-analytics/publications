@@ -1,0 +1,1 @@
+task,failure_type,error_message0.7:decompose,instruction_violation,"LLM attempt:1 failed to extract upper level brackets for [(2*5+3)-(4/2)+(6*5-[8-(6+2)])]-7+(3*4/2), Generated expression is incorrect: E0-7+(3*4/2)"

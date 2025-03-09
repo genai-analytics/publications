@@ -1,0 +1,35 @@
+{
+    "name": "is_valid_expression.metric",
+    "context": {
+        "trace_id": "0x96e66694091616038b7a7e06a81d5a93",
+        "span_id": "0x24876157413e5274",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": null,
+    "start_time": "2025-02-18T18:05:21.044873Z",
+    "end_time": "2025-02-18T18:05:21.045063Z",
+    "status": {
+        "status_code": "UNSET"
+    },
+    "attributes": {},
+    "events": [
+        {
+            "name": "manual instrumentation variable",
+            "timestamp": "2025-02-18T18:05:21.045017Z",
+            "attributes": {
+                "type": "failure",
+                "name": "invalid_expression",
+                "value": "global_failure",
+                "message": "LanggraphLLMCalculator - Failed to validate (6-2)*4-7), delegating to parent calculator. Exception: unmatched ')' (<string>, line 1)"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "service.name": "run_calculator_final.py"
+        },
+        "schema_url": ""
+    }
+}
