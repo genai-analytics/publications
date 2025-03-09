@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List, Dict, Union
 from enum import Enum
-from otel_genai_agentic_taxonomies.elements import Element, AttributeValue
+from .elements import Element, AttributeValue
 
 # --- Supporting Models ---
 

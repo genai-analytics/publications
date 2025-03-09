@@ -2,8 +2,8 @@ import json
 from pydantic import Field
 from typing import List, Any, Dict, Union, Optional
 from enum import Enum
-from otel_genai_agentic_taxonomies.elements import Element, AttributeValue
-from otel_genai_agentic_taxonomies.iunits import IUnit, Relation, Relation
+from .elements import Element, AttributeValue
+from .iunits import IUnit, Relation, Relation
 
 
 # ---------------------------------------------------------------------------

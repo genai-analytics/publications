@@ -1,8 +1,8 @@
 from pydantic import Field
 from typing import List, Optional, Any
-from otel_genai_agentic_taxonomies.iunits import IUnit, IUnitData
-from otel_genai_agentic_taxonomies.resources import Resource
-from otel_genai_agentic_taxonomies.workflows import Workflow, Runnable
+from .iunits import IUnit, IUnitData
+from .resources import Resource
+from .workflows import Workflow, Runnable
 
 class Agent(IUnitData):
     resource_ids: Optional[List[str]] = Field(

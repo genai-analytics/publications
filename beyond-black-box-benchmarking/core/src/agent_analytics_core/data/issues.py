@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from enum import Enum
 from datetime import datetime
-from otel_genai_agentic_taxonomies.elements import Element, ElementData
+from .elements import Element
 
 class IssueLevel(str, Enum):
     """
@@ -14,7 +14,7 @@ class IssueLevel(str, Enum):
     INFO = "INFO"
     DEBUG = "DEBUG"
 
-class Issue(ElementData):
+class Issue(Element):
     time: Optional[str] = Field(
         None, description="The time the issue was detected (ISO formatted string)"
     )

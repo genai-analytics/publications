@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Any, Union
 from enum import Enum
-from otel_genai_agentic_taxonomies.elements import Element
-from otel_genai_agentic_taxonomies.traces import Event
+from .elements import Element
+from .traces import Event
 
 class AIEvent(Event, Element):
     """

@@ -2,8 +2,8 @@ from pydantic import Field
 from typing import List, Any, Dict, Union, Optional
 from enum import Enum
 import json
-from otel_genai_agentic_taxonomies.elements import Element  
-from otel_genai_agentic_taxonomies.resources import Resource  
+from .elements import Element  
+from .resources import Resource  
 
 class IUnit(Element):
     """
