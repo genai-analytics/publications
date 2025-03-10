@@ -1,10 +1,10 @@
 from pydantic import Field
 from typing import List, Optional, Any
-from .iunits import IUnit, IUnitData
+from .iunits import IUnit
 from .resources import Resource
-from .workflows import Workflow, Runnable
+from .workflows import Workflow
 
-class Agent(IUnitData):
+class Agent(IUnit):
     resource_ids: Optional[List[str]] = Field(
         default_factory=list,
         description="List of resource IDs that can be used by the agent."
