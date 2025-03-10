@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Any, Type, Dict, Union
 from enum import Enum
-from otel_genai_agentic_taxonomies.elements import Element
+from .elements import Element
 
 class DataAnnotation(Element):
     """

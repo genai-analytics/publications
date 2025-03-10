@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from enum import Enum
 from datetime import datetime
-from otel_genai_agentic_taxonomies.elements import Element
+from .elements import Element
 
 class RecommendationLevel(str, Enum):
     """

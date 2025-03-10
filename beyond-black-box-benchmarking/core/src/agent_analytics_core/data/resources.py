@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional, Any, Union, Dict
 from enum import Enum
-from otel_genai_agentic_taxonomies.elements import Element, AttributeValue
+from .elements import Element, AttributeValue
 
 class ResourceCategory(str, Enum):
     TEMPLATE = "TEMPLATE"

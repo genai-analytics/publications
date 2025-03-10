@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from otel_genai_agentic_taxonomies.elements import Element
+from .elements import Element
 
 class Task(Element):
     input_resource_ids: Optional[List[str]] = Field(

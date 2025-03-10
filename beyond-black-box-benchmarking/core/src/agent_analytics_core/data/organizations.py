@@ -2,8 +2,8 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional, Any, Tuple, Dict
 from enum import Enum
-from otel_genai_agentic_taxonomies.iunits import Relation
-from otel_genai_agentic_taxonomies.agents import Agent
+from .iunits import Relation
+from .agents import Agent
 
 class Role(Relation):
     """
