@@ -36,6 +36,6 @@ For each log, **summary.csv** includes TAMAS outputs of key trace metrics.
 
 ## How to use ABBench?
 
-Using your agent analytics systems, access and analyze ABBench logs. Then compare your analytics outcomes with the Ground Truth.
+Using your agent analytics system, access and analyze ABBench logs. Then compare your analytics outcomes with the Ground Truth.
 
-### ABBENCH will be extended with additional logs and tools.
+### ABBench will be extended with additional logs and tools.
