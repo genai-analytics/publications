@@ -1,0 +1,35 @@
+{
+    "name": "is_valid_expression.metric",
+    "context": {
+        "trace_id": "0x6a662f4b66ea60dcc546b7f59beb2b93",
+        "span_id": "0x7c808929b645ac7c",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": null,
+    "start_time": "2025-02-20T16:39:08.152426Z",
+    "end_time": "2025-02-20T16:39:08.152641Z",
+    "status": {
+        "status_code": "UNSET"
+    },
+    "attributes": {},
+    "events": [
+        {
+            "name": "manual instrumentation variable",
+            "timestamp": "2025-02-20T16:39:08.152586Z",
+            "attributes": {
+                "type": "failure",
+                "name": "invalid_expression",
+                "value": "global_failure",
+                "message": "LanggraphLLMCalculator - Failed to validate ((3*2)-7*[(6+5)/2]+8)-(9*2)+(4-*7*3)/5, delegating to parent calculator. Exception: invalid syntax (<string>, line 1)"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "service.name": "run_calculator_final.py"
+        },
+        "schema_url": ""
+    }
+}

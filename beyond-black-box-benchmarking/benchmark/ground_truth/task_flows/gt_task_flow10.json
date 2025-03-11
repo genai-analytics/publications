@@ -1,0 +1,147 @@
+[
+    {
+        "id": "3d3882e8-7c7e-47b5-97c5-fd07e2bd8fef",
+        "name": "0.0:check_syntax",
+        "tags": [
+            "tool_call",
+            "LangGraph Node"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"((3*2)-7*[(6+5)/2]+8)-(9*2)+(4-*7*3)/5\", \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"is_expression_valid\": false, \"is_result_correct\": false, \"result\": null}}",
+        "log_reference": {
+            "trace_id": "0x7e62a61afdff0de093e5be755ae59df9",
+            "span_id": "0x28e80b9eb857f6cb"
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [
+                    "graph:step:1"
+                ],
+                "metadata": {
+                    "langgraph_step": 1,
+                    "langgraph_node": "check_syntax",
+                    "langgraph_triggers": [
+                        "start:check_syntax"
+                    ],
+                    "langgraph_path": [
+                        "__pregel_pull",
+                        "check_syntax"
+                    ],
+                    "langgraph_checkpoint_ns": "check_syntax:9e444c60-0cfb-c647-6c29-b0d42349b2e1"
+                },
+                "kwargs": {
+                    "name": "check_syntax"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": [
+                        "graph:step:1"
+                    ]
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-20T16:49:12.522043Z",
+        "end_time": "2025-02-20T16:49:12.901535Z",
+        "metrics": {
+            "execution_time": 0.379492,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "children": 0,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "check_syntax": 1
+            }
+        },
+        "events": [
+            {
+                "name": "manual instrumentation variable",
+                "timestamp": "2025-02-20T16:49:12.898124Z",
+                "attributes": {
+                    "type": "failure",
+                    "name": "invalid_expression",
+                    "value": "global_failure",
+                    "message": "Invalid math expression: invalid syntax (<string>, line 1)"
+                },
+                "event_loc": 0,
+                "span_ids": [
+                    "0x28e80b9eb857f6cb"
+                ]
+            }
+        ],
+        "parent_id": "db8b884f-08aa-4867-951e-0969d314510d",
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": [
+            "Invalid math expression: invalid syntax (<string>, line 1)"
+        ]
+    },
+    {
+        "id": "db8b884f-08aa-4867-951e-0969d314510d",
+        "name": "0:_ROOT",
+        "tags": [
+            "LangGraph Workflow",
+            "complex"
+        ],
+        "input": "{\"inputs\": {\"expression\": \"((3*2)-7*[(6+5)/2]+8)-(9*2)+(4-*7*3)/5\", \"iteration\": 0}}",
+        "output": "{\"outputs\": {\"expression\": \"((3*2)-7*[(6+5)/2]+8)-(9*2)+(4-*7*3)/5\", \"result\": null, \"iteration\": 0, \"is_result_correct\": false, \"is_expression_valid\": false}}",
+        "log_reference": {
+            "trace_id": ""
+        },
+        "status": "CREATED",
+        "attributes": {
+            "additional_inputs": {
+                "tags": [],
+                "metadata": {},
+                "kwargs": {
+                    "name": "LangGraph"
+                }
+            },
+            "additional_outputs": {
+                "kwargs": {
+                    "tags": []
+                }
+            }
+        },
+        "metadata": {},
+        "start_time": "2025-02-20T16:49:12.286594Z",
+        "end_time": "2025-02-20T16:49:12.904331Z",
+        "metrics": {
+            "execution_time": 0.617737,
+            "failure_analysis": {
+                "outcome": "failure",
+                "global_failure": true,
+                "failure_type": [
+                    "invalid_expression"
+                ]
+            },
+            "llm_calls": 0,
+            "tool_calls": 1,
+            "interaction_length": 1,
+            "num_input_tokens": 0,
+            "num_output_tokens": 0,
+            "num_total_tokens": 0,
+            "tool_distribution": {
+                "check_syntax": 1
+            },
+            "children": 1
+        },
+        "events": [],
+        "parent_id": null,
+        "dependent_ids": [],
+        "graph_id": null,
+        "issues": []
+    }
+]

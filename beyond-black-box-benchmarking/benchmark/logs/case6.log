@@ -1,0 +1,35 @@
+{
+    "name": "is_valid_expression.metric",
+    "context": {
+        "trace_id": "0xb7c7656068caf54d39d6681721bb48bd",
+        "span_id": "0x218a70644685de1c",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": null,
+    "start_time": "2025-02-18T18:13:47.551274Z",
+    "end_time": "2025-02-18T18:13:47.551386Z",
+    "status": {
+        "status_code": "UNSET"
+    },
+    "attributes": {},
+    "events": [
+        {
+            "name": "manual instrumentation variable",
+            "timestamp": "2025-02-18T18:13:47.551346Z",
+            "attributes": {
+                "type": "failure",
+                "name": "invalid_expression",
+                "value": "global_failure",
+                "message": "LanggraphLLMCalculator - Failed to validate (1+2+3)*5+6/(8+4-12), delegating to parent calculator. Exception: division by zero"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "service.name": "run_calculator_final.py"
+        },
+        "schema_url": ""
+    }
+}
