@@ -12,6 +12,7 @@ class ResourceCategory(str, Enum):
     VIDEO = "VIDEO"
     CODE = "CODE"
     ENCODING = "ENCODING"
+    MODEL = "MODEL"
     FILE = "FILE"
     DB = "DB"
 
